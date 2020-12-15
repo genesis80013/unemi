@@ -1,0 +1,22 @@
+{% extends "ajaxformbase.html" %}
+{% block extraheading %}
+    <script type="text/javascript">
+        $(function() {
+            $("#id_nombre").addClass("validate[required]");
+        });
+    </script>
+{% endblock %}
+{% block titulo %}{{ title }}{% endblock %}
+{% block formwidth %}form-l{% endblock %}
+{% block formaction %}/adm_configuracioncomplexivo{% endblock %}
+{% block formdestination %}/adm_configuracioncomplexivo?action=adm_tipopregunta{% endblock %}
+{% block formextra %}
+    {% if tipopregunta %}
+        <input type='hidden' name='action' value='edit_tipopregunta'/>
+        <input type='hidden' name='id' value='{{ tipopregunta.id }}'/>
+    {% else %}
+        <input type='hidden' name='action' value='add_tipopregunta'/>
+    {% endif %}
+{% endblock %}
+{% block formback %}/adm_configuracioncomplexivo?action=adm_tipopregunta{% endblock %}
+{% block buttonname %}Guardar{% endblock %}

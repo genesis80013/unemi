@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block heading %}
+{% endblock %}
+{% block contenidopanel %}
+    <div class="row-fluid">
+        <div class="span12">
+            <h3>{{ title }}</h3>
+        </div>
+    </div>
+
+    <div class="row-fluid">
+        <div class="span12">
+            <a class="btn btn-success" href="/adm_configuracioncomplexivo?action=add_formatoreactivo"><i class="fa fa-plus"></i> Agregar formato</a>
+        </div>
+    </div>
+    <div class="row-fluid">
+        <div class="span12">
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Tipo de reactivo</th>
+                    <th style="text-align: center">N° Nota mínima</th>
+                    <th style="text-align: center">N° Nota máxima</th>
+                    <th style="text-align: center">N° Opcion mínima</th>
+                    <th style="text-align: center">N° Opcion máxima</th>
+                    <th style="text-align: center">Campos</th>
+                    <th style="text-align: center">Archivo</th>
+                    <th style="width: 50px; text-align: center">Activo</th>
+                    <th style="width: 100px; text-align: center">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for p in formatoreactivo %}
+                    <tr>
+                        <td>
+                            {{ p }}
+                        </td>
+                        <td>
+                            {{ p.tiporeactivo }}
+                        </td>
+                        <td style="text-align: center">
+                            {{ p.notamin }}
+                        </td>
+                        <td style="text-align: center">
+                            {{ p.notamax }}
+                        </td>
+                        <td style="text-align: center">
+                            {{ p.opcionesmin }}
+                        </td>
+                        <td style="text-align: center">
+                            {{ p.opcionesmax }}
+                        </td>
+                        <td style="text-align: center">
+                           <a href="javascript:;"  nhref="/adm_configuracioncomplexivo?action=adm_atributoreactivo&idformato={{ p.id }}" class="btn btn-warning btn-mini tu ajaxshowdinamicbs" title="Campos del formato"><i class="fa fa-info-circle"></i></a>
+                        </td>
+                        <td style="text-align: center">
+                            {% if p.archivo %}
+                                <a href="{{ p.archivo.url }}" target="_blank" class="btn btn-success btn-mini"><i class="fa fa-arrow-down"></i> Descargar</a>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center">
+                            {% if p.estado %}
+                                <i class="fa fa-check"></i>
+                            {% else %}
+                                <i class="fa fa-close"></i>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center">
+                            <a href="/adm_configuracioncomplexivo?action=edit_formatoreactivo&id={{ p.id }}" class="btn btn-info btn-mini tu" title="Editar"><i class="fa fa-edit"></i></a>
+                            <a href="javascript:;" nhref="/adm_configuracioncomplexivo?action=del_formatoreactivo&id={{ p.id }}" class="btn btn-danger btn-mini eliminacionmodal tu" title="Eliminar"><i class="fa fa-remove"></i></a>
+                        </td>
+                        {% empty %}
+                        <td style="text-align: center" colspan="12">NO EXISTEN REGISTROS</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,509 @@
+{% extends "ajaxformbase.html" %}
+{% block extraheading %}
+    <script type="text/javascript">
+        $(function () {
+            lista_items1 = [];
+            var count = {{asignacion.tamaniobateria}};
+            var cont = 0;
+            var asignatura = 0;
+            var actualizar_lista= function(){
+            $('#tbody0').html('');
+            var total = 0;
+            for(i=0; i<lista_items1.length; i++){
+                if(lista_items1[i].reactivos.length!=0){
+                    $('#tbody0').append('<tr>' +
+                        '<td>'+lista_items1[i].asignatura+'</td>' +
+                        '<td style="text-align: center;">'+lista_items1[i].reactivos.length+'</td>' +
+                        '<td style="text-align: center;" ><button class="btn btn-mini btn-warning" idtr="'+lista_items1[i].id+'" onclick="verseleccionados(this)"><i class="fa fa-eye"></i></button>' +
+                                                            '<b> </b><button class="btn btn-mini btn-danger" idtr="'+lista_items1[i].id+'" onclick="eliminar(this)"> <i class="fa fa-close"></i></button></td>' +
+                        '</tr>');
+                    total = total + lista_items1[i].reactivos.length;
+                }
+
+            }
+            $('#idt').text('Total de reactivos: '+total);
+            if(total == count){
+                $('#vali').val('1');
+            }else{
+                $('#vali').val('0');
+            }
+        };
+            cargar = function(){
+                lista_items1 = [];
+                var item = {};
+                {% for a in reactivos %}
+                    item = {asignatura: "{{ a.asignatura }}", id: "{{ a.id }}", reactivos:[]};
+                    {% for b in a.reactivos %}
+                        if(item.reactivos.length == 0){
+                            item.reactivos = ["{{ b }}"];
+                        }else{
+                            item.reactivos.push("{{ b }}");
+                        }
+                    {% endfor %}
+                    if(lista_items1.length == 0){
+                        lista_items1 = [item];
+                    }else{
+                        lista_items1.push(item);
+                    }
+                {% endfor %}
+                actualizar_lista();
+            };
+            window.onloadend = cargar();
+            $('#cerrar').click(function () {
+               $('#myModal').modal('hide');
+            });
+            valiasignatura = function(asignatura){
+                var ban= false;
+                for(i=0; i<lista_items1.length; i++){
+                    if(lista_items1[i].id == asignatura){
+                        ban = true;
+                        break;
+                    }
+                }
+                return ban;
+            };
+            $('#agregar').click(function () {
+                $('#myModal').modal('hide');
+                if(valiasignatura(asignatura)){
+                    for(i=0; i<lista_items1.length;i++){
+                        if(lista_items1[i].id == asignatura){
+                            $('.selectreactivo:not(:checked)').each(function () {
+                                var id = $(this).attr('idtr');
+                                lista_items1[i].reactivos = $.grep(lista_items1[i].reactivos, function (value) {
+                                  return value !=  id;
+                               });
+                            });
+                            $('.selectreactivo:checked').each(function () {
+                                var item = $(this).attr('idtr');
+                                 if(lista_items1[i].reactivos.length == 0){
+                                     lista_items1[i].reactivos = [item];
+                                 }else{
+                                     lista_items1[i].reactivos.push(item);
+                                 }
+                            });
+                            lista_items1[i].reactivos = lista_items1[i].reactivos.filter( onlyUnique );
+                        }
+                    }
+                }else{
+                    var item = {id: asignatura, asignatura: $('#select2-idperiodo-container').text(), reactivos:[]};
+                    if(lista_items1.length == 0){
+                        lista_items1 = [item];
+                    }else{
+                        lista_items1.push(item);
+                    }
+                    var index = lista_items1.length - 1;
+                    $('.selectreactivo:checked').each(function () {
+                        var item = $(this).attr('idtr');
+                         if(lista_items1[index].reactivos.length == 0){
+                             lista_items1[index].reactivos = [item];
+                         }else{
+                             lista_items1[index].reactivos.push(item);
+                         }
+                    });
+                }
+                actualizar_lista();
+            });
+            $('#idperiodo').change(function () {
+                var periodo = $(this).val();
+                $('#idtotalreactivos').val('');
+                $('#idcantidad').val('1');
+                if(periodo!="0"){
+                    var formdata =  new FormData();
+                    formdata.append('action', 'listar_cantreactivoperiodo');
+                    formdata.append('idasig', {{ asignacion.id }});
+                    formdata.append('idperiodo', periodo);
+                    $.ajax({
+                        type: "POST",
+                        url: "/cord_configuracioncomplexivo",
+                        data: formdata,
+                        success: function(data) {
+                            try{
+                                console.log(data.result);
+                            if (data.result == 'ok') {
+                                $('#idtotalreactivos').val(data.mensaje);
+                            } else {
+                                if (data.result == 'session') {
+                                    location.href='/';
+                                }else{
+                                    smoke.alert(data.mensaje);
+                                    $('#idtotalreactivos').val('');
+                                }
+                            }
+                            }catch (e) {
+                                console.log(e.message);
+                                $('#idtotalreactivos').val('');
+                            }
+
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(thrownError);
+                            $('#idtotalreactivos').val('');
+                        },
+                        dataType: "json",
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    });
+                }
+            });
+            onlyUnique = function (value, index, self) {
+                return self.indexOf(value) === index;
+            };
+            listar = function(cantidad, periodo){
+                bloqueointerface();
+                var formdata = new FormData();
+                formdata.append('action', 'adm_reactivosperiodo');
+                formdata.append('idasig', {{ asignacion.id }});
+                formdata.append('idperiodo', periodo);
+                formdata.append('cant', cantidad);
+                asignatura = periodo;
+                $.ajax({
+                    type: "POST",
+                    url: "/cord_configuracioncomplexivo",
+                    data: formdata,
+                    success: function(data) {
+                        try{
+                            console.log(data.result);
+                        if (data.result == 'ok') {
+                             $.unblockUI();
+                            $('#tbody1').html('');
+                            var i=0;
+                            console.log(data.mensaje);
+                            for(detalle in data.mensaje){
+                                var aleatorio = '<i class="fa fa-close"></i>';
+                                if (data.mensaje[detalle]['aleatorio']){
+                                    aleatorio = '<i class="fa fa-check"></i>';
+                                }
+                                var detalles = data.mensaje[detalle]['atributos'];
+                                var texto = '';
+                                for(d in detalles){
+                                    if(detalles[d]['archivo'] == ""){
+                                        texto = texto + '<label><b>'+detalles[d]['atributo__nombre']+': </b>'+detalles[d]['texto']+'</label>';
+                                    }else{
+                                        texto = texto + '<label><b>'+detalles[d]['atributo__nombre']+': </b>'+detalles[d]['texto']+' <a class="btn btn-mini btn-warning" target="_blank" href="media/'+detalles[d]['archivo']+'"><i class="fa fa-image"></i></a></label>';
+                                    }
+                                };
+                                var index = 1;
+                                var opciones = data.mensaje[detalle]['opciones'];
+                                var checked = "";
+                                if(data.mensaje[detalle]['vali']){
+                                    checked = 'checked';
+                                }
+                                $('#tbody1').append('<tr>' +
+                                    '<td>' +
+                                    '<label><b>N°: </b>'+(i+1)+'</label>' +
+                                    '<label><b>TIPO DE PREGUNTA: </b>'+data.mensaje[detalle]['tipopregunta']+'</label>' +
+                                    '<label><b>Asignatura: </b>'+data.mensaje[detalle]['asignatura']+'</label>' +
+                                    '<label><b>CALIFICACIÓN: </b>'+data.mensaje[detalle]['nota']+'</label>' +
+                                    '<label><b>ALEATORIO: </b>'+aleatorio+'</label>' +
+                                    '</td>' +
+                                    '<td>'+String(texto)+'</td>'+
+                                    '<td id="td_'+data.mensaje[detalle]['reactivo']+'"></td>'+
+                                    '<td style="text-align:center"><input type="checkbox" class="selectreactivo" idtr="'+data.mensaje[detalle]['reactivo']+'" id="ch_'+data.mensaje[detalle]['reactivo']+'" '+checked+'></td>'+
+                                    '</tr>');
+                                index=1;
+                                for(d in opciones){
+                                    var s = opciones[d]['texto'].replace("<",'< ');
+                                    if(opciones[d]['archivo'] == ""){
+                                        $('#td_'+data.mensaje[detalle]['reactivo']).append('<label><b>'+index+': </b>'+s+'</label>');
+                                    }else{
+                                        $('#td_'+data.mensaje[detalle]['reactivo']).append('<label><b>'+index+': </b>'+s+' <a class="btn btn-mini btn-warning" target="_blank" href="media/'+opciones[d]['archivo']+'"><i class="fa fa-image"></i></a></label>');
+
+                                    }
+                                    index++;
+                                }
+                                i++;
+                            }
+                            for(i=0; i<lista_items1.length; i++){
+                                if(lista_items1[i].id==data.asignatura){
+                                    if(lista_items1[i].reactivos.length!=0){
+                                        for(j=0; j<lista_items1[i].reactivos.length; j++){
+                                            $('#ch_'+lista_items1[i].reactivos[j]).attr('checked','checked');
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                            var total = $('.selectreactivo:checked').length;
+                            $('#totalselect').text('Total: '+total);
+                            $('#myModal').modal({'width':'1000'}).modal('show');
+                            $('#titleheader').text('Reactivos de '+$('#select2-idasignatura-container').text().toLowerCase());
+                        } else {
+                            if (data.result == 'session') {
+                                location.href='/';
+                            }else{
+                                 $.unblockUI();
+                                smoke.alert(data.mensaje);
+                            }
+                        }
+                        }catch (e) {
+                            $.unblockUI();
+                            console.log(e.message);
+                        }
+
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        $.unblockUI();
+                        alert(thrownError);
+                    },
+                    dataType: "json",
+                    cache: false,
+                    contentType: false,
+                    processData: false
+                });
+            };
+            $('#verreactivos').click(function () {
+                var periodo=$('#idperiodo').val();
+                var cantidad = $('#idcantidad').val();
+                if(cantidad == "") cantidad = '0';
+                if(periodo!="0"){
+                    if(parseInt(cantidad)<=parseInt($('#idtotalreactivos').val())){
+                        listar(cantidad, periodo);
+                    }else{
+                        smoke.alert('Error en la cantidad');
+                    }
+                }else{
+                    smoke.alert('Seleccionar correctamente período');
+                    asignatura = 0;
+                }
+            });
+            $('#tbody1').click(function () {
+                $('#totalselect').text('Total: '+$('.selectreactivo:checked').length);
+            });
+            $('#selectreactivos').on('change',function () {
+                var checked = $(this).attr('checked');
+                if(checked){
+                    $('.selectreactivo').attr('checked','checked');
+                }else{
+                    $('.selectreactivo').removeAttr('checked');
+                }
+                $('#totalselect').text('Total: '+$('.selectreactivo:checked').length);
+            });
+            verseleccionados = function (t) {
+                bloqueointerface();
+                var id=$(t).attr('idtr');
+                var reactivos = [];
+                var titulo = "";
+                for(i=0; i<lista_items1.length; i++){
+                    if(lista_items1[i].id == id){
+                        reactivos = lista_items1[i].reactivos;
+                        titulo = lista_items1[i].asignatura;
+                        break;
+                    }
+                }
+                var formdata = new FormData();
+                formdata.append('action', 'listar_reactivosasigbateria');
+                formdata.append('lista_reactivos', JSON.stringify(reactivos));
+                $.ajax({
+                    type: "POST",
+                    url: "/cord_configuracioncomplexivo",
+                    data: formdata,
+                    success: function(data) {
+                        try{
+                            $.unblockUI();
+                            if (data.result == 'ok') {
+                                $('#tbody2').html('');
+                                var i=0;
+                                for(detalle in data.mensaje){
+                                    var aleatorio = '<i class="fa fa-close"></i>';
+                                    if (data.mensaje[detalle]['aleatorio']){
+                                        aleatorio = '<i class="fa fa-check"></i>';
+                                    }
+                                    var detalles = data.mensaje[detalle]['atributos'];
+                                    var texto = '';
+                                    for(d in detalles){
+                                        if(detalles[d]['archivo'] == ""){
+                                            texto = texto + '<label><b>'+detalles[d]['atributo__nombre']+': </b>'+detalles[d]['texto']+'</label>';
+                                        }else{
+                                            texto = texto + '<label><b>'+detalles[d]['atributo__nombre']+': </b>'+detalles[d]['texto']+' <a class="btn btn-mini btn-warning" target="_blank" href="media/'+detalles[d]['archivo']+'"><i class="fa fa-image"></i></a></label>';
+                                        }
+                                    };
+                                    var index = 1;
+                                    var opciones = data.mensaje[detalle]['opciones'];
+                                    var checked = "";
+                                    if(data.mensaje[detalle]['vali']){
+                                        checked = 'checked';
+                                    }
+                                    $('#tbody2').append('<tr>' +
+                                        '<td>' +
+                                        '<label><b>N°: </b>'+(i+1)+'</label>' +
+                                        '<label><b>TIPO DE PREGUNTA: </b>'+data.mensaje[detalle]['tipopregunta']+'</label>' +
+                                        '<label><b>ASIGNATURA: </b>'+data.mensaje[detalle]['asignatura']+'</label>' +
+                                        '<label><b>CALIFICACIÓN: </b>'+data.mensaje[detalle]['nota']+'</label>' +
+                                        '<label><b>ALEATORIO: </b>'+aleatorio+'</label>' +
+                                        '</td>' +
+                                        '<td>'+String(texto)+'</td>'+
+                                        '<td id="tdopciones_'+data.mensaje[detalle]['reactivo']+'"></td>'+
+                                        '</tr>');
+                                    index=1;
+                                    for(d in opciones){
+                                        var s = opciones[d]['texto'].replace("<",'< ');
+                                        if(opciones[d]['archivo'] == ""){
+                                            $('#tdopciones_'+data.mensaje[detalle]['reactivo']).append('<label><b>'+index+': </b>'+s+'</label>');
+                                        }else{
+                                            $('#tdopciones_'+data.mensaje[detalle]['reactivo']).append('<label><b>'+index+': </b>'+s+' <a class="btn btn-mini btn-warning" target="_blank" href="media/'+opciones[d]['archivo']+'"><i class="fa fa-image"></i></a></label>');
+
+                                        }
+                                        index++;
+                                    }
+                                    i++;
+                                }
+                                $('#titleh2').text('Reactivos de '+ titulo);
+                                $('#myModal2').modal({'width':'1000'}).modal('show');
+                            } else {
+                            if (data.result == 'session') {
+                                location.href='/';
+                            }else{
+                                smoke.alert(data.mensaje);
+                            }
+                        }
+                        }catch (e) {
+                            $.unblockUI();
+                            console.log(e.message);
+                        }
+
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        $.unblockUI();
+                        alert(thrownError);
+                    },
+                    dataType: "json",
+                    cache: false,
+                    contentType: false,
+                    processData: false
+                });
+            };
+            eliminar = function (t) {
+            var id = $(t).attr('idtr');
+            var index = null;
+            for(i=0; i<lista_items1.length; i++){
+                if(lista_items1[i].id==id){
+                    index = i;
+                    break;
+                }
+            }
+            if(index!=null){
+                lista_items1.splice(index,1);
+                actualizar_lista();
+            }
+        };
+        });
+    </script>
+{% endblock %}
+{% block titulo %}
+    <h5>{{ title }}</h5>
+    <h5>Tamaño de bateria: {{ asignacion.tamaniobateria }}</h5>
+{% endblock %}
+{% block formwidth %}form-lg{% endblock %}
+{% block formaction %}/cord_configuracioncomplexivo{% endblock %}
+{% block formdestination %}/cord_configuracioncomplexivo?action=adm_bateriaexamen{% endblock %}
+{% block formback %}/cord_configuracioncomplexivo?action=adm_bateriaexamen{% endblock %}
+{% block formextra %}
+    <div class="row-fluid">
+        <div class="control-group cont-70" style="padding: 1%; min-height:45px; float: left;">
+            <div class="control-label" style="width: 200px; text-align: right; line-height: 20px; padding-right: 10px;padding-top: 5px; float: left; text-transform: capitalize">
+                <h5>Período: </h5>
+            </div>
+            <div class="controls cont-div-70">
+                <select class="mdb-select" formwidth="100" id="idperiodo">
+                    <option value="0">------------</option>
+                    {% for a in periodo %}
+                        <option value="{{ a.id }}">{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="control-group cont-30" style="padding: 1%; min-height:45px; float: left;">
+            <div class="control-label" style="width: 200px; text-align: right; line-height: 20px; padding-right: 10px;padding-top: 5px; float: left; text-transform: capitalize">
+                <h5>Total de reactivos: </h5>
+            </div>
+            <div class="controls cont-div-30">
+                <input type="number" readonly id="idtotalreactivos">
+            </div>
+        </div>
+        <div class="control-group cont-70" style="padding: 1%; min-height:45px; float: left;">
+            <div class="control-label" style="width: 200px; text-align: right; line-height: 20px; padding-right: 10px;padding-top: 5px; float: left; text-transform: capitalize">
+                <h5>Cantidad: </h5>
+            </div>
+            <div class="controls cont-div-70">
+                <input type="number" formwidth="50" value="1" name="cantidad" id="idcantidad" min="1">
+            </div>
+        </div>
+        <div class="control-group cont-30" style="padding: 1%; min-height:45px; float: left;">
+                <div class="control-label" style="width: 200px; text-align: right; line-height: 20px; padding-right: 10px;padding-top: 5px; float: left; text-transform: capitalize">
+
+                </div>
+                <div class="controls cont-div-100">
+                    <button class="btn btn-block btn-success pull-right" id="verreactivos">Ver</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row-fluid">
+        <table width="100%" class="table table-bordered">
+            <thead>
+                <th>Periodo</th>
+                <th style="text-align: center;">Cantidad</th>
+                <th style="text-align: center;">Ajustes</th>
+            </thead>
+            <tbody id="tbody0">
+
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="12" >
+                        <b id="idt">Total de reactivos: 0</b>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    <div class="modal fade hide" id="myModal">
+        <div class="modal-header"><h5 id="titleheader">Reactivos de fundamentos de programacion</h5></div>
+        <div class="modal-body">
+            <div id="reactivosadd" class="tree well" style="overflow-y: auto;height: 400px; padding-top: 5px; padding-left: 5px; padding-right: 5px; padding-bottom: 5px;">
+                <table class="table table-bordered">
+                    <thead>
+                    <tr><th colspan="2">Detalles</th>
+                    <th>Opciones</th>
+                    <th style="text-align: center">Selección <input type="checkbox" id="selectreactivos"></th>
+                    </tr></thead>
+                    <tbody id="tbody1">
+                    </tbody>
+                </table>
+            </div>
+            <h5 id="totalselect">Total: 0</h5>
+        </div>
+        <div class="modal-footer">
+            <p style="text-align: right; margin-bottom: 0">
+                <a href="javascript:;" id="agregar" class="btn btn-success"> Agregar</a>
+                <a href="javascript:;" id="cerrar" class="btn btn-danger"> Cerrar</a>
+            </p>
+        </div>
+    </div>
+    <div class="modal fade hide" id="myModal2">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <h5 id="titleh2" class="modal-title" >Reactivos de fundamentos de programacion</h5>
+        </div>
+        <div class="modal-body">
+            <div id="reactivosadd" class="tree well" style="overflow-y: auto;height: 400px; padding-top: 5px; padding-left: 5px; padding-right: 5px; padding-bottom: 5px;">
+                <table class="table table-bordered">
+                    <thead>
+                    <tr><th colspan="2">Detalles</th>
+                    <th>Opciones</th>
+                    </tr></thead>
+                    <tbody id="tbody2">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <input type="hidden" name="action" value="edit_bateriaexamenaleatorio">
+    <input type="hidden" name="id" value="{{asignacion.id}}">
+    <input type="hidden" name="idbateria" value="{{bateria.id}}">
+    <input type="hidden" name="vali" value="0" id="vali">
+{% endblock %}

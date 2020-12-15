@@ -1,0 +1,7 @@
+{% extends "ajaxdeletedinamicbs.html" %}
+{% block titulo %}{{ title }}{% endblock %}
+{% block formaction %}/adm_configuracioncomplexivo{% endblock %}
+{% block formdestination %}/adm_configuracioncomplexivo?action=adm_tiporeactivo{% endblock %}
+{% block formactionvalue %}del_tiporeactivo{% endblock %}
+{% block formobjectid %}{{ tiporeactivo.id }}{% endblock %}
+{% block formobjectrepr %}{{ tiporeactivo }}{% endblock %}

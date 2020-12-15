@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block heading %}
+    <script type="text/javascript">
+        $(function() {
+            $('#btnconfirmar').click(function () {
+                window.history.forward();
+                var url = "/est_configuracioncomplexivo";
+                var formdata = new FormData();
+                formdata.append('action', 'add_confirmarexamencomplexivo');
+                formdata.append('idestudiante', '{{ grupoestudiante.id }}');
+                console.log(formdata.getAll('action'));
+                $.ajax({
+                    type: "POST",
+                    url: "/est_configuracioncomplexivo",
+                    data: {'action': 'add_confirmarexamencomplexivo','idestudiante': '{{ grupoestudiante.id }}'},
+                    success: function(data) {
+                        if (data.result == 'ok') {
+                            location.href = "/est_configuracioncomplexivo?action=adm_detalleexamencomplexivo&id={{grupoestudiante.id}}";
+                        } else {
+                            $.unblockUI();
+                            smoke.alert(data.mensaje);
+                        }
+                    },
+                    error: function() {
+                        $.unblockUI();
+                        smoke.alert(data.mensaje);
+                    },
+                    dataType: "json"
+                });
+            });
+            /*
+            $('#btnconfirmar').click(function () {
+                $('#formenviar').attr('action','/est_configuracioncomplexivo');
+                $('#act').val('add_confirmarexamencomplexivo');
+                $('#formenviar').submit();
+            });*/
+            $('#btnregresar').click(function () {
+                $('#formenviar').attr('action','/est_configuracioncomplexivo');
+                $('#act').val('ant_examencomplexivo');
+                $('#formenviar').submit();
+            })
+        });
+    </script>
+{% endblock %}
+{% block contenidopanel %}
+    <div class="row-fluid">
+        <a class="btn btn-info pull-right" href="/est_configuracioncomplexivo?action=adm_examencomplexivo">Salir</a>
+    </div>
+    <div class="row-fluid">
+        <div class="well">
+        <h5>{{ title }}</h5>
+        <h5>CARRERA: {{ grupoestudiante.grupoexamen.cronogramaexamen.carrera.carrera }}</h5>
+        <h5>ESTUDIANTE: {{ grupoestudiante.estudiante.inscripcion.persona }}</h5>
+        <h5>TIPO DE EXAMEN: {% if grupoestudiante.grupoexamen.tipoexamen == 1 %}AVANZAR Y RETROCEDER{% elif grupoestudiante.grupoexamen.tipoexamen == 2 %}AVANZAR{% else %}TIEMPO{% endif %}</h5>
+        {% if grupoestudiante.grupoexamen.tipoexamen == 3 %}
+        <h5>TIEMPO POR PREGUNTA: {{ grupoestudiante.grupoexamen.minutos }} MINUTOS</h5>{% endif %}
+        </div>
+    </div>
+    <div class="row-fluid">
+        <table class="table-bordered table">
+            <tbody>
+                <tr>
+                    <td>
+                        <h5><b>Total de reactivos: </b> {{ reactivos|length }}</h5>
+                        <h5><b>Preguntas contestadas: </b> {{count }}</h5>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        {% if tipoexamen == 1 %}
+                            <button class="btn btn-lg btn-danger" id="btnregresar">REGRESAR</button>
+                        {% endif %}
+                            <button class="btn btn-lg btn-success" id="btnconfirmar">CONFIRMAR</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <form method="post" action="" id="formenviar" class="hidden">
+        <input id="act" name="action" value="">
+        <input name="idestudiante" value="{{ grupoestudiante.id }}">
+        <input name="index" value="{{ index }}">
+    </form>
+{% endblock %}

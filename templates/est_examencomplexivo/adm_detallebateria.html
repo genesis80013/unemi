@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block heading %}
+{% endblock %}
+{% block contenidopanel %}
+    <div class="row-fluid">
+        <div class="span12">
+            <a class="btn btn-lg btn-info pull-right" href="/est_configuracioncomplexivo?action=adm_verbateria"><i class="fa fa-arrow-circle-left"></i> Volver</a>
+            <h5>{{ title }}</h5>
+
+        </div>
+    </div>
+    <div class="row-fluid">
+        <table class="table table-bordered">
+            <thead>
+                <th>Tipo de reactivo</th>
+                <th>Materia/Área</th>
+                <th style="text-align: center">Cantidad</th>
+                <th style="text-align: center">Info</th>
+            </thead>
+            <tbody>
+            {% for r in reactivos %}
+                <tr>
+                <td>{{ r.tipo }}</td>
+                <td>{{ r.nombre }}</td>
+                <td style="text-align: center;">{{ r.cantidad }}</td>
+                <td style="text-align: center;">
+                    <a class="btn btn-mini btn-info" target="_blank" href="/est_configuracioncomplexivo?action=adm_descargarbateria&id={{ actual.id }}&tipo={{ r.tipo }}&idtip={{ r.id }}" ><i class="fa fa-download"></i> Descargar</a>
+                    <a class="btn btn-mini btn-success" target="_blank" href="/est_configuracioncomplexivo?action=adm_verbateriareactivo&id={{ actual.id }}&tipo={{ r.tipo }}&idtip={{ r.id }}" ><i class="fa fa-eye"></i> Ver</a>
+                </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

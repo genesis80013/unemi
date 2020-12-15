@@ -1,0 +1,263 @@
+{% extends "ajaxformbase.html" %}
+{% block extraheading %}
+<script type="text/javascript">
+$(function () {
+    lista_items1 = [];
+    $('#id_tipo').change(function () {
+        var texto = $('#select2-id_tipo-container').text();
+        if(texto == "TIEMPO"){
+            $("#id_minutos").addClass('validate[required]');
+        }else{
+            $("#id_minutos").removeClass('validate[required]');
+        }
+    });
+    $('.valinotamin').change(function () {
+        var max = $('.valinotamax').val();
+        if(max!=""){
+            var min = parseInt($('.valinotamin').val());
+            if(max<min){
+                smoke.alert('Ingresar nota menor a calificación de examen');
+                $(this).val('');
+            }
+        }
+    });
+    $('.valinotamax').change(function () {
+        var max = parseInt($(this).val());
+        var min = $('.valinotamin').val();
+        if(min==""){
+
+        }else{
+            min = parseInt(min);
+            if(max<min){
+                smoke.alert('Ingresar nota mayor a calificación de aprobación');
+                $(this).val('');
+            }
+        }
+    });
+    valihora = function(inicio, fin){
+                var ban = false;
+                if(fin.getHours() > inicio.getHours()){
+                    ban  = true;
+                }else{
+                    if(fin.getHours() == inicio.getHours()){
+                        if(fin.getMinutes()> inicio.getMinutes()){
+                            ban = true;
+                        }else{
+                            ban = false;
+                        }
+                    }else{
+                        ban = false;
+                    }
+                }
+                return ban;
+            };
+    $('.inicio').change(function () {
+        var final = $('.fin').val();
+        if(final!= ""){
+            var inicio = $('.inicio').val();
+            var actual = new Date();
+            inicio = new Date(actual.getFullYear(), actual.getMonth(), actual.getDate(), parseInt(inicio.split(':')[0]), parseInt(inicio.split(':')[1]));
+            fin = new Date(actual.getFullYear(), actual.getMonth(), actual.getDate(), parseInt(final.split(':')[0]), parseInt(final.split(':')[1]));
+            if(valihora(inicio,fin)){
+                $('#valiact').val('1');
+            }else{
+                $('#valiact').val('0');
+            }
+        }else{
+            $('#valiact').val('0');
+        }
+    });
+    $('.fin').change(function () {
+        var inicio = $('.inicio').val();
+        if(inicio == ""){
+            smoke.alert('Ingresar primero la hora de inicio');
+            $(this).val('');
+            $('#valiact').val('0');
+        }else{
+            var final = $('.fin').val();
+            var actual = new Date();
+            inicio = new Date(actual.getFullYear(), actual.getMonth(), actual.getDate(), parseInt(inicio.split(':')[0]), parseInt(inicio.split(':')[1]));
+            fin = new Date(actual.getFullYear(), actual.getMonth(), actual.getDate(), parseInt(final.split(':')[0]), parseInt(final.split(':')[1]));
+            if(valihora(inicio,fin)){
+                $('#valiact').val('1');
+            }else{
+                $('#valiact').val('0');
+            }
+        }
+    });
+    $('.valitiempo ').change(function () {
+        var actual = new Date();
+        var inicio = $('#id_inicio').val();
+        var fin = $('#id_fin').val();
+        var tiempo = $('#id_minutos').val();
+        var cantidad = $('#id_cantidad').val();
+        var hora = parseInt(inicio.split(':')[0]);
+        var minutos = parseInt(inicio.split(':')[1]);
+        inicio = new Date(actual.getFullYear(), actual.getMonth(), actual.getDate(), hora, minutos);
+        var minutoSumar  = parseInt(tiempo) * cantidad;
+        fin = new Date(actual.getFullYear(), actual.getMonth(), actual.getDate(), hora, minutos);
+        fin.setMinutes(inicio.getMinutes()+minutoSumar);
+        if(valihora(inicio,fin)){
+            $('#valiact').val('1');
+            var hora = fin.getHours();
+            var minutos = fin.getMinutes();
+            if(hora<10) hora = "0"+hora;
+            if(minutos<10) minutos = "0"+minutos;
+            var final = hora+":"+minutos;
+            $('#id_fin').val(final);
+        }else{
+            $('#valiact').val('0');
+        }
+    });
+    $('#cerrar').click(function () {
+        $('#myModalest').modal('hide');
+        //borrar los check
+        $('.checktodos').removeAttr('checked');
+        $('.activaest').removeAttr('checked');
+    });
+    vali_lista1=function(){
+        var ban = false;
+        for(i=0; i<lista_items1.length; i++){
+            if(lista_items1[i].action!="del"){
+                ban =true;
+                break;
+            }
+        }
+        if(ban==true){
+            $('#valiestudiantes').val('1');
+        }else{
+            $('#valiestudiantes').val('0');
+        }
+    };
+    actualizar_lista = function(){
+        $('#tbody').html('');
+        for(i=0; i<lista_items1.length; i++){
+            $('#tbody').append('<tr><td>'+lista_items1[i].cedula+'</td><td>'+lista_items1[i].nombres+'</td><td style="text-align:center;"><button class="btn btn-mini btn-danger" onclick="eliminar(this)" idtr="'+lista_items1[i].idmatricula+'"><i class="fa fa-close"></i></button></td></tr>');
+        }
+        vali_lista1();
+    };
+    eliminar = function(t){
+        var id=$(t).attr('idtr');
+        var index = -1;
+        for(i=0; i<lista_items1.length; i++){
+            if(lista_items1[i].idmatricula == id){
+                index = i;
+                break;
+            }
+        }
+        lista_items1.splice(index,1);
+        actualizar_lista();
+        console.log(lista_items1);
+    };
+    valiest = function(idmatricula){
+        var ban=true;
+        for(i=0; i<lista_items1.length; i++){
+            if(lista_items1[i].idmatricula == idmatricula && lista_items1[i].action != "del"){
+                ban = false;
+                break;
+            }
+        }
+        return ban;
+    };
+    $('.checktodos').on('change',function () {
+        var checked = $(this).attr('checked');
+        if(checked=="checked"){
+            $('.activaest').attr('checked', 'checked');
+        }else{
+            $('.activaest').removeAttr('checked');
+        }
+    });
+    $('#agregar').click(function () {
+        $('#myModalest').modal('hide');
+        //1. validar que los estudiantes no estes agregados
+        $('.activaest').each(function () {
+            var idmatricula = $(this).attr('idtr');
+            if($(this).attr('checked')=="checked"){
+                var vali = valiest(idmatricula);
+                var nombres = $(this).attr('nombres');
+                var cedula = $(this).attr('ced');
+                if(vali){
+                    var item = {id:"", action:"add", idmatricula:idmatricula, cedula: cedula, nombres: nombres};
+                    if(lista_items1.length==0){
+                        lista_items1 = [item];
+                    }else{
+                        lista_items1.push(item);
+                    }
+                }
+            }
+        });
+        //2. agregar a la lista
+        //3. actualizar lista
+        actualizar_lista();
+        console.log(lista_items1);
+        //borrar los check
+        $('.checktodos').removeAttr('checked');
+        $('.activaest').removeAttr('checked');
+    });
+    add_estudiantes = function () {
+        $('#myModalest').modal({'width':'900'}).modal('show');
+        for(i=0; i<lista_items1.length; i++){
+            $('#ch_'+lista_items1[i].idmatricula).attr('checked','checked');
+        }
+    };
+});
+</script>
+{% endblock %}
+{% block titulo %}{{ title }}{% endblock %}
+{% block formwidth %}form-l{% endblock %}
+{% block formaction %}/adm_configuracioncomplexivo{% endblock %}
+{% block formdestination %}/adm_configuracioncomplexivo?action=adm_grupoexamen&id={{ examen.id }}{% endblock %}
+{% block formadicional %}
+    <table class="table table-bordered">
+    <thead>
+    <tr>
+        <th colspan="12">Estudiantes<button class="btn btn-mini btn-success pull-right" onclick="add_estudiantes();">Agregar</button></th>
+    </tr>
+    <tr>
+        <th>Identificación</th>
+        <th>Estudiante</th>
+        <th style="text-align: center;">Ajuste</th>
+    </tr>
+    </thead>
+    <tbody id="tbody">
+    <tr><td colspan="12">No existen registros</td></tr>
+    </tbody>
+    </table>
+    <div class="modal fade hide" id="myModalest">
+        <div class="modal-header"><h5>Estudiantes</h5></div>
+        <div class="modal-body">
+            <div class='well'>
+            <table class="table table-bordered">
+                <thead>
+                <th>Cédula</th>
+                <th>Estudiante</th>
+                <th style="text-align: center;">Seleccionar <input type="checkbox" class="checktodos" > </th>
+                </thead>
+                <tbody>
+                {% for e in estudiantes %}
+                    <tr>
+                        <td>{{ e.inscripcion.persona.cedula }}</td>
+                        <td>{{ e.inscripcion.persona.apellido1 }} {{  e.inscripcion.persona.apellido2}} {{ e.inscripcion.persona.nombres }}</td>
+                        <td style="text-align: center;"><input type="checkbox" id="ch_{{ e.id }}" idtr="{{ e.id }}" class="activaest" ced="{{ e.inscripcion.persona.cedula }}" nombres="{{ e.inscripcion.persona.apellido1 }} {{  e.inscripcion.persona.apellido2}} {{ e.inscripcion.persona.nombres }}"></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <p style="text-align: right; margin-bottom: 0">
+                <a href="javascript:;" id="agregar" class="btn btn-success"> Agregar</a>
+                <a href="javascript:;" id="cerrar" class="btn btn-danger"> Cerrar</a>
+            </p>
+        </div>
+    </div>
+{% endblock %}
+{% block formextra %}
+    <input type='hidden' name='action' value='add_grupoexamen'/>
+    <input type='hidden' name='id' value='{{examen.id}}'/>
+    <input type='hidden' id="valiact" name='vali' value='0'/>
+    <input type='hidden' id="valiestudiantes" name='valiestudiantes' value='0'/>
+{% endblock %}
+{% block formback %}/adm_configuracioncomplexivo?action=adm_grupoexamen&id={{ examen.id }}{% endblock %}
+{% block buttonname %}Guardar{% endblock %}

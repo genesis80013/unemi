@@ -1,0 +1,23 @@
+{% extends "ajaxformbase.html" %}
+{% block extraheading %}
+    <script type="text/javascript">
+        $(function() {
+            $("#id_nombre").addClass("validate[required]");
+        });
+    </script>
+{% endblock %}
+{% block titulo %}{{ title }}{% endblock %}
+{% block formwidth %}form-l{% endblock %}
+{% block formaction %}/pais{% endblock %}
+{% block formdestination %}/{% endblock %}
+{% block formextra %}
+    {% if pais %}
+        <input type='hidden' name='action' value='edit_pais'/>
+        <input type='hidden' name='id' value='{{ pais.id }}'/>
+    {% else %}
+        <input type='hidden' name='action' value='add_pais'/>
+    {% endif %}
+{% endblock %}
+{% block formback %}/{% endblock %}
+{% block buttonname %}Guardar pais{% endblock %}
+

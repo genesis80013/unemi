@@ -1,0 +1,7 @@
+{% extends "ajaxdeletedinamicbs.html" %}
+{% block titulo %}{{ title }}{% endblock %}
+{% block formaction %}/adm_configuracioncomplexivo{% endblock %}
+{% block formdestination %}/adm_configuracioncomplexivo?action=adm_grupoexamen&id={{ grupo.cronogramaexamen.id }}{% endblock %}
+{% block formactionvalue %}del_grupoexamen{% endblock %}
+{% block formobjectid %}{{ grupo.id }}{% endblock %}
+{% block formobjectrepr %}{{ grupo }}{% endblock %}

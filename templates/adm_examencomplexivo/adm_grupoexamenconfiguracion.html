@@ -1,0 +1,44 @@
+<script type="text/javascript">
+    $(function() {
+
+        $("#eliminacionmodal_cancel").click(function(){
+            $('#ajaxshowdinamicbs').modal('hide');
+        });
+    });
+</script>
+{% block canvas %}
+    <div id="ajaxshowdinamicbs"></div>
+    <div class="modal-header"><h4>{% block titulo %}{% endblock %}</h4></div>
+    <div class="modal-body" style="min-height: 60px">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th colspan="12">Asignaciones</th>
+                </tr>
+                <tr>
+                    <th>Cédula</th>
+                    <th>Estudiante</th>
+                </tr>
+            </thead>
+            <tbody id="tblista">
+            {% for g in grupos %}
+                <tr>
+                    <td>
+                        {{ g.estudiante.inscripcion.persona.cedula }}
+                    </td>
+                    <td>
+                        {{ g.estudiante.inscripcion.persona.apellido1 }} {{ g.estudiante.inscripcion.persona.apellido2 }} {{ g.estudiante.inscripcion.persona.nombres }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="12">No existen registros</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="modal-footer">
+        <p style="text-align: right; margin-bottom: 0">
+            <a href="javascript:;" id="eliminacionmodal_cancel" class="btn btn-info"> Cerrar</a>
+        </p>
+    </div>
+{% endblock %}

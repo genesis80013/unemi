@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block contenidopanel %}
+    <div class="row-fluid">
+    <h3>{{ title }}</h3>
+    </div>
+    <div class="row-fluid">
+        <table class="table table-bordered">
+            <thead>
+                <th>Cédula</th>
+                <th>Estudiante</th>
+                <th>Periodo</th>
+                <th>Examen</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Info</th>
+            </thead>
+            <tbody>
+            {% for i in impugnaciones %}
+                <tr>
+                    <td>
+                        {{ i.grupoexamenestudiante.estudiante.inscripcion.persona.cedula }}
+                    </td>
+                    <td>
+                        {{ i.grupoexamenestudiante.estudiante.inscripcion.persona }}
+                    </td>
+                    <td>
+                        {{ i.periodo }}
+                    </td>
+                    <td>
+                        {{ i.examen }}
+                    </td>
+                    <td>
+                        {{ i.fecha }}
+                    </td>
+                    <td>
+                        {% if i.estado %}
+                            REVISADO
+                        {% else %}
+                            NO REVISADO
+                        {% endif %}
+                    </td>
+                    <td style="text-align: center;">
+                        <a class="btn btn-mini btn-warning" href="/adm_configuracioncomplexivo?action=edit_impugnacion&id={{ i.id }}"><i class="fa fa-edit"></i></a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

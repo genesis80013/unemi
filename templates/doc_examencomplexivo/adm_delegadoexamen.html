@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block heading %}
+{% endblock %}
+{% block contenidopanel %}
+    <div class="row-fluid">
+        <h5>{{ title }}</h5>
+    </div>
+    <div class="row-fluid">
+        <table class="table table-bordered">
+            <thead>
+                <th>Carrera</th>
+                <th>Examen</th>
+                <th>Docente</th>
+                <th>Grupo</th>
+                <th>Aula</th>
+                <th>Fecha</th>
+                <th>Inicio</th>
+                <th>Fin</th>
+                <th>Ajustes</th>
+            </thead>
+            <tbody>
+            {% for i in grupos %}
+                <tr>
+                    <td>{{ i.grupo.grupoexamen.cronogramaexamen.carrera.carrera }}</td>
+                    <td>{{ i.grupo.grupoexamen.cronogramaexamen }}</td>
+                    <td>{{ i.grupo.docente.persona }}</td>
+                    <td>{{ i.grupo.grupoexamen }}</td>
+                    <td>{{ i.grupo.grupoexamen.aula }}</td>
+                    <td>{{ i.grupo.grupoexamen.fecha|date:'d-m-y' }}</td>
+                    <td>{{ i.grupo.grupoexamen.inicio }}</td>
+                    <td>{{ i.grupo.grupoexamen.fin }}</td>
+                    <td style="text-align: center;">{% if i.vali %}<a class="btn btn-mini btn-warning" href="/doc_configuracioncomplexivo?action=edit_examenestudiante&id={{ i.grupo.id }}">Editar</a>{% endif %}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="12">No existen registros</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

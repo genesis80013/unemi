@@ -1,0 +1,576 @@
+{% extends "ajaxformbase.html" %}
+{% block extraheading %}
+    <script type="text/javascript">
+        $(function() {
+            lista_items1 = [];
+            let lista_asignaturas = [];
+            $("#id_nombre").addClass("validate[required]");
+            $(".activaselect").select2();
+            const inicio = "{{ asignacion.inicio|date:'d-m-Y' }}";
+            const fin = "{{ asignacion.fin|date:'d-m-Y' }}";
+            const tipo = "{{ asignacion.formato.formatoreactivo.tiporeactivo.nombre|lower }}";
+            var valilista = function(){
+                var bandera = false;
+                for(i=0; i<lista_items1.length; i++){
+                    if(lista_items1[i].action != "del"){
+                        bandera = true;
+                        break;
+                    }
+                }
+                if(bandera) $('#valilista').val('1');
+                else $('#valilista').val('0');
+            };
+            var cargar = function () {
+                {% if mallas|length != 0 %}
+                    {% for m in mallas %}
+                        var vigente = "";
+                        {% if m.malla.vigente %}
+                            vigente = "VIGENTE";
+                        {% else %}
+                            vigente = "NO VIGENTE";
+                        {% endif %}
+                        $('.mallaid').append('<option value="{{ m.malla.id }}"> {{ m.malla }} - '+vigente+'</option>');
+                    {% endfor %}
+                {% endif %}
+                $('#select2-id_formato-container').text('{{ asignacion.formato.formatoreactivo }}');
+            //llenar asignaciones
+            {% if asignaciones|length != 0 %}
+                {% for a in asignaciones %}
+                    var item = {};
+                    var activo = false;
+                    var estado = false;
+                    {% if a.activo %}
+                    activo = true;
+                    {% endif %}
+                    {% if a.estadofinal %}
+                    estado = true;
+                    {% endif %}
+                    if(tipo == "general"){
+                        item = {action:"none", id:"{{ a.id }}", nombre:"", idasignacion:"{{ a.asignacion.id }}", idformato:"{{ a.formato.id }}", formato:"{{ a.formato.formatoreactivo }}", idpersona:"{{ a.persona.id }}", persona:"{{ a.persona }}", idarea:"{{ a.area.id }}", area:"{{ a.area }}", inicio:"{{ a.inicio|date:'d-m-Y' }}", fin:"{{ a.fin|date:'d-m-Y' }}", cantidad:"{{ a.cantidad }}", activo:activo, estado:estado}
+                    }else{
+                        item = {action:"none", id:"{{ a.id }}", nombre:"", idasignacion:"{{ a.asignacion.id }}", idformato:"{{ a.formato.id }}", formato:"{{ a.formato.formatoreactivo }}", idmalla:"{{ a.asignatura.malla.id }}", malla:"{{ a.asignatura.malla }}", iddocente:"{{ a.docente.id }}", docente:"{{ a.docente.persona }}", idasignatura:"{{ a.asignatura.id }}", asignatura:"{{ a.asignatura.asignatura }} - {{ a.asignatura.nivelmalla.nombre }}", inicio:"{{ a.inicio|date:'d-m-Y' }}", fin:"{{ a.fin|date:'d-m-Y' }}", cantidad:"{{ a.cantidad }}", activo:activo, estado:estado}
+                    }
+                    if(lista_items1.length==0) lista_items1=[item];
+                    else lista_items1.push(item);
+                {% endfor %}
+            {% endif %}
+            //validarlista
+            valilista();
+            };
+            var limpiarasignatura = function () {
+                $('.docenteid').val('0');
+                $('#select2-id_docente-container').text('----------');
+                $('#select2-id_docente-container').attr('title', '----------');
+                $('.materiaid ').html('<option value="">---------</option>');
+                $('#select2-id_materia-container').text('----------');
+                $('#select2-id_materia-container').attr('title', '----------');
+
+            };
+            var limpiarejeformativo = function(){
+                $('.asignaturaid').val('0');
+                $('#select2-id_asignatura-container').text('----------');
+                $('#select2-id_asignatura-container').attr('title','----------');
+                limpiarasignatura();
+            };
+            var limpiarmalla = function(){
+                $('.ejeformativoid').val('0');
+                $('#select2-id_ejeformativo-container').text('----------');
+                $('#select2-id_ejeformativo-container').attr('title','----------');
+                limpiarejeformativo();
+            };
+            limpiar = function(){
+                if(tipo == "general"){
+                    $('.areaid').val('0');
+                    $('#select2-id_area-container').text('----------');
+                    $('#select2-id_area-container').attr('title','----------');
+                    $('.personaid').val('0');
+                    $('#select2-id_persona-container').text('----------');
+                    $('#select2-id_persona-container').attr('title','----------');
+                }else{
+                    $('.mallaid').val('0');
+                    $('#select2-id_malla-container').text('----------');
+                    $('#select2-id_malla-container').attr('title','----------');
+                    limpiarmalla();
+                }
+                $('.valicantidad').val('');
+                $('.fechainicio').val(inicio);
+                $('.fechafin').val(fin);
+                $('.valiactivo').attr('checked', 'checked');
+            };
+            $('.mallaid').on('change',function () {
+               var idmalla = $(this).val();
+               limpiarmalla();
+               if(idmalla != ""){
+                   var formdata = new FormData();
+                   formdata.append('idmalla',idmalla);
+                   formdata.append('action','listar_asignaturas');
+                    $.ajax({
+                        type: "POST",
+                        url: "/cord_configuracioncomplexivo",
+                        data: formdata,
+                        success: function(data) {
+                            console.log(data.result);
+                            if (data.result == 'ok') {
+                                $('.asignaturaid').html('<option value="">---------</option>');
+                                lista_asignaturas = [];
+                                for (asignatura in data.mensaje){
+                                    $('.asignaturaid').append('<option value="'+data.mensaje[asignatura]['id']+'">'+data.mensaje[asignatura]['asignatura__nombre']+' - '+data.mensaje[asignatura]['nivelmalla__nombre']+'</option>')
+                                    if(lista_asignaturas.length==0){
+                                        lista_asignaturas = [{id: data.mensaje[asignatura]['id'], asignatura: data.mensaje[asignatura]['asignatura__nombre'], nivelid: data.mensaje[asignatura]['nivelmalla'], nivel: data.mensaje[asignatura]['nivelmalla__nombre'], ejeformativoid: data.mensaje[asignatura]['ejeformativo'], ejeformativo: data.mensaje[asignatura]['ejeformativo__nombre']}]
+                                    }else{
+                                        lista_asignaturas.push({id: data.mensaje[asignatura]['id'], asignatura: data.mensaje[asignatura]['asignatura__nombre'], nivelid: data.mensaje[asignatura]['nivelmalla'], nivel: data.mensaje[asignatura]['nivelmalla__nombre'], ejeformativoid: data.mensaje[asignatura]['ejeformativo'], ejeformativo: data.mensaje[asignatura]['ejeformativo__nombre']});
+                                    }
+                                }
+                                console.log(lista_asignaturas);
+                            } else {
+                                if (data.result == 'session') {
+                                    location.href='/';
+                                }else{
+                                    smoke.alert(data.mensaje);
+                                }
+                            }
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(thrownError);
+                        },
+                        dataType: "json",
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    });
+               }else{
+                   $('.asignaturaid').html('<option value="">---------</option>');
+               }
+            });
+            $('.ejeformativoid').on('change', function () {
+                var ejeformativoid = $(this).val();
+                $('.asignaturaid').html('<option value="">---------</option>');
+                limpiarejeformativo();
+                if(ejeformativoid !=""){
+                    for(i=0; i<lista_asignaturas.length;i++){
+                        if(lista_asignaturas[i].ejeformativoid == ejeformativoid){
+                            $('.asignaturaid').append('<option value="'+lista_asignaturas[i].id+'">'+lista_asignaturas[i].asignatura+' - '+lista_asignaturas[i].nivel+'</option>');
+                        }
+                    }
+                }else{
+                    for(i=0; i<lista_asignaturas.length;i++){
+                        $('.asignaturaid').append('<option value="'+lista_asignaturas[i].id+'">'+lista_asignaturas[i].asignatura+' - '+lista_asignaturas[i].nivel+'</option>');
+                    }
+                }
+            });
+            $('.asignaturaid ').on('change',function () {
+                var asignaturaid = $(this).val();
+                $('.materiaid ').html('<option value="">---------</option>');
+                limpiarasignatura();
+                if(asignaturaid != ""){
+                    var formdata = new FormData();
+                    formdata.append('action', 'listar_materias');
+                    formdata.append('idasignatura', asignaturaid);
+                    $.ajax({
+                        type: "POST",
+                        url: "/cord_configuracioncomplexivo",
+                        data: formdata,
+                        success: function(data) {
+                            console.log(data.result);
+                            if (data.result == 'ok') {
+                                console.log(data.mensaje);
+                                for (detalle in data.mensaje){
+                                    var string = '<optgroup label="'+data.mensaje[detalle]['periodo']+'">';
+                                    var docentes = data.mensaje[detalle]['docentes'];
+                                    for(docente in docentes){
+                                        string = string + '<option value="'+docentes[docente]['profesor_id']+'">PARALELO '+docentes[docente]['materia__paralelomateria__nombre']+': '+docentes[docente]['profesor__persona__nombres']+' '+docentes[docente]['profesor__persona__apellido1']+' '+docentes[docente]['profesor__persona__apellido2']+'</option>';
+                                    }
+                                    string = string + '</optgroup>';
+                                    $('.materiaid ').append(string);
+                                }
+                            } else {
+                                if (data.result == 'session') {
+                                    location.href='/';
+                                }else{
+                                    smoke.alert(data.mensaje);
+                                }
+                            }
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(thrownError);
+                        },
+                        dataType: "json",
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    });
+                }
+            });
+            $('.materiaid').on('change', function () {
+                var iddocente = $(this).val();
+                if(iddocente!= ""){
+                    $('.docenteid').val(iddocente);
+                    var texto = $('#select2-id_materia-container').attr('title').split(': ')[1];
+                    $('#select2-id_docente-container').text(texto);
+                    $('#select2-id_docente-container').attr('title',texto);
+                }
+            });
+            window.onloadend = cargar();
+
+            var valifecha = function (final, inicial) {
+                //return 0 cuando las fechas son iguales
+                //return 1 cuando la fecha final es mayor a la fecha inicial
+                //return -1 cuando la fecha inicial es mayor a la fecha final
+                var offset = new Date().getTimezoneOffset();
+                var final = new Date(final.split('-')[2],final.split('-')[1] - 1,final.split('-')[0]);
+                var inicial = new Date(inicial.split('-')[2],inicial.split('-')[1] - 1,inicial.split('-')[0]);
+                if(final.getYear() == inicial.getYear()){
+                    if(final.getMonth() == inicial.getMonth()){
+                        if(final.getDate() == inicial.getDate()){
+                            return 0;
+                        }else if(final.getDate() > inicial.getDate()){ //dia final es mayor
+                            return 1;
+                        }else{ //dia inicial es mayor
+                            return -1;
+                        }
+                    }else if(final.getMonth() > inicial.getMonth()){ //mes final es mayor
+                        return 1;
+                    }else{ //mes inicial es mayor
+                        return -1;
+                    }
+                }else if(final.getYear()>inicial.getYear()){ //anio final es mayor
+                    return 1;
+                }else{ //anio inicial es mayor
+                    return -1;
+                }
+             };
+            var valirangofechas = function(inicioc, finc){
+                var val="1";
+                if(valifecha(finc, inicioc)!= -1){
+                    if(valifecha(inicioc, inicio) != -1 && valifecha(fin, inicioc)!= -1){
+                        if(valifecha(finc, inicio)!= -1 && valifecha(fin,finc) != -1){
+                            val="1";
+                        }else{
+                            val = "0";
+                        }
+
+                    }else{
+                        val = "0";
+                    }
+                }else{
+                    val = "0";
+                }
+                return val;
+            };
+            valiadd = function () {
+                var inicio = $('.fechainicio').val();
+                var fin = $('.fechafin').val();
+                var cantidad = $('.valicantidad').val();
+                var fecha = valirangofechas(inicio, fin);
+                if(tipo == "general"){
+                    var malla = $('.mallaid').val();
+                    var asignatura = $('.asignaturaid').val();
+                    var docente = $('.docenteid').val();
+                    if (fecha!= "0" && malla != "" && asignatura != "" && docente != "" && inicio != "" && fin != "" && cantidad != "")
+                        return true;
+                    else return false;
+                }else{
+                    var persona = $('.personaid').val();
+                    var area = $('.areaid').val();
+                    if (fecha!= "0" && malla != "" && persona != "" && area != "" && inicio != "" && fin != "" && cantidad != "")
+                        return true;
+                    else return false;
+                }
+            };
+            var vali_add = function(id1, id2){
+                var ban=true;
+                for(i=0; i<lista_items1.length; i++){
+                    if(tipo == "general"){
+                        if(lista_items1[i].action != "del" && lista_items1[i].idpersona == id1 && lista_items1[i].idarea == id2){
+                            ban = false;
+                            break;
+                        }
+                    }else{
+                        if(lista_items1[i].action != "del" && lista_items1[i].iddocente == id1 && lista_items1[i].idasignatura == id2){
+                            ban = false;
+                            break;
+                        }
+                    }
+                }
+                return ban;
+            };
+            var actualizar_lista = function(){
+                $('#tbody0').html('');
+                for(i=0; i<lista_items1.length; i++){
+                    var style="", activo="<i class='fa fa-check'></i>";
+                    var estado = activo;
+                    if(lista_items1[i].action == "del") style="display:none;";
+                    if(lista_items1[i].activo == false) activo="<i class='fa fa-close' style=\"color: red\"></i>";
+                    if(lista_items1[i].estado == false) estado="<i class='fa fa-close' style=\"color: red\"></i>";
+                    if(tipo=="general")
+                        $('#tbody0').append('<tr style="'+style+'"><td>'+lista_items1[i].formato+'</td><td>'+lista_items1[i].area+'</td><td>'+lista_items1[i].persona+'</td><td style="text-align: center;">'+lista_items1[i].inicio+'</td><td style="text-align: center;">'+lista_items1[i].fin+'</td><td style="text-align: center;">'+lista_items1[i].cantidad+'</td><td style="text-align: center;">'+activo+'</td><td style="text-align: center;">'+estado+'</td><td style="text-align: center;"><button class="btn btn-mini tu btn-warning" title="Editar" onclick="editar(this)" idpersona="'+lista_items1[i].idpersona+'" idarea="'+lista_items1[i].idarea+'"><i class="fa fa-edit"></i></button><b> </b><button class="btn btn-mini tu btn-danger" title="Eliminar" onclick="eliminar(this)" idpersona="'+lista_items1[i].idpersona+'" idarea="'+lista_items1[i].idarea+'"><i class="fa fa-remove"></i></button></td></tr>');
+                    else
+                        $('#tbody0').append('<tr style="'+style+'"><td>'+lista_items1[i].formato+'</td><td>'+lista_items1[i].malla+'</td><td>'+lista_items1[i].asignatura+'</td><td>'+lista_items1[i].docente+'</td><td style="text-align: center;">'+lista_items1[i].inicio+'</td><td style="text-align: center;">'+lista_items1[i].fin+'</td><td style="text-align: center;">'+lista_items1[i].cantidad+'</td><td style="text-align: center;">'+activo+'</td><td style="text-align: center;">'+estado+'</td><td style="text-align: center;"><button class="btn btn-mini tu btn-warning" title="Editar" onclick="editar(this)" iddocente="'+lista_items1[i].iddocente+'" idasignatura="'+lista_items1[i].idasignatura+'"><i class="fa fa-edit"></i></button><b> </b><button class="btn btn-mini tu btn-danger" title="Eliminar" onclick="eliminar(this)" iddocente="'+lista_items1[i].iddocente+'" idasignatura="'+lista_items1[i].idasignatura+'"><i class="fa fa-remove"></i></button></td></tr>');
+                }
+                console.log(lista_items1);
+            };
+            var agregar = function(){
+                var item = {};
+                var asignacion = $('#asignacion').val();
+                var idformato = $('.formato').val();
+                var formato = $('#select2-id_formato-container').text();
+                var idmalla = "";
+                var malla = "";
+                var idpersona = "";
+                var persona = "";
+                var idarea = "";
+                var area = "";
+                var iddocente = "";
+                var docente = "";
+                var idasignatura = "";
+                var asignatura = "";
+                var inicio = $('.fechainicio').val();
+                var fin = $('.fechafin').val();
+                var cantidad = $('.valicantidad').val();
+                var activo = $('.valiactivo').attr('checked');
+                if(activo == 'checked') activo=true;
+                else activo = false;
+                var ban;
+                if(tipo == "general")
+                {
+                    idpersona = $('.personaid').val();
+                    persona = $('#select2-id_persona-container').text();
+                    idarea = $('.areaid').val();
+                    area = $('#select2-id_area-container').text();
+                    item = {action: 'add', id:'', nombre: '', idasignacion:asignacion, idformato:idformato, formato: formato,
+                    idpersona: idpersona, persona: persona, idarea: idarea, area: area, inicio: inicio, fin: fin, cantidad: cantidad, activo:activo};
+                    ban = vali_add(idpersona, idarea);
+                }else{
+                    idmalla = $('.mallaid').val();
+                    malla = $('#select2-id_malla-container').text();
+                    iddocente = $('.docenteid').val();
+                    docente = $('#select2-id_docente-container').text();
+                    idasignatura = $('.asignaturaid').val();
+                    asignatura = $('#select2-id_asignatura-container').text();
+                    item = {action: 'add', id:'', nombre: '', idasignacion:asignacion, idformato:idformato, formato: formato,
+                        idmalla: idmalla, malla: malla, iddocente: iddocente, docente: docente, idasignatura: idasignatura,
+                        asignatura: asignatura, inicio: inicio, fin: fin, cantidad: cantidad, activo:activo};
+                    ban = vali_add(iddocente, idasignatura);
+                }
+                if(ban){
+                    if(lista_items1.length == 0){
+                        lista_items1 = [item];
+                    }else{
+                        lista_items1.push(item);
+                    }
+                }else{
+                    smoke.alert('Ya existe asignación');
+                }
+            };
+            var editar2 = function(){
+                if(tipo == "general"){
+                    var idpersona = $('#act_edit1').val();
+                    var idarea = $('#act_edit2').val();
+                }else{
+                    var iddocente = $('#act_edit1').val();
+                    var idasignatura = $('#act_edit2').val();
+                }
+                for(i=0; i<lista_items1.length; i++){
+                    if(tipo == "general"){
+                        if(lista_items1[i].action != "del" && lista_items1[i].idpersona==idpersona && lista_items1[i].idarea==idarea){
+                            if(lista_items1[i].action != "add") lista_items1[i].action = "edit";
+                            lista_items1[i].inicio = $('.fechainicio').val();
+                            lista_items1[i].fin = $('.fechafin').val();
+                            lista_items1[i].cantidad = $('.valicantidad').val();
+                            if($('.valiactivo').attr('checked') == "checked") lista_items1[i].activo = true;
+                            else lista_items1[i].activo = false;
+                        }
+                    }else{
+                        if(lista_items1[i].action != "del" && lista_items1[i].iddocente==iddocente && lista_items1[i].idasignatura==idasignatura){
+                            if(lista_items1[i].action != "add") lista_items1[i].action = "edit";
+                            lista_items1[i].inicio = $('.fechainicio').val();
+                            lista_items1[i].fin = $('.fechafin').val();
+                            lista_items1[i].cantidad = $('.valicantidad').val();
+                            if($('.valiactivo').attr('checked') == "checked") lista_items1[i].activo = true;
+                            else lista_items1[i].activo = false;
+                        }
+                    }
+                }
+                $('#act').val('');
+                $('#act_edit1').val('');
+                $('#act_edit2').val('');
+            };
+            $('.add_docente').click(function () {
+                var action = $('#act').val();
+                if(valiadd()){
+                    if(action != "edit"){
+                        agregar();
+                    }else{
+                        editar2();
+                    }
+                    valilista();
+                    actualizar_lista();
+                    limpiar();
+                }else{
+                    smoke.alert('Verificar campos');
+                }
+            });
+            eliminar = function(t){
+                if(tipo == "general"){
+                    var idpersona = $(t).attr('idpersona');
+                    var idarea = $(t).attr('idarea');
+                }else{
+                    var iddocente = $(t).attr('iddocente');
+                    var idasignatura = $(t).attr('idasignatura');
+                }
+                for(i=0; i<lista_items1.length; i++){
+                    if(tipo == "general"){
+                        if(lista_items1[i].action != "del" && lista_items1[i].idpersona == idpersona && lista_items1[i].idarea == idarea){
+                            if(lista_items1[i].action == "add"){
+                                lista_items1.splice(i,1);
+                            }else{
+                                lista_items1[i].action = "del";
+                            }
+                        }
+                    }else{
+                        if(lista_items1[i].action != "del" && lista_items1[i].iddocente == iddocente && lista_items1[i].idasignatura == idasignatura){
+                            if(lista_items1[i].action == "add"){
+                                lista_items1.splice(i,1);
+                            }else{
+                                lista_items1[i].action = "del";
+                            }
+                        }
+                    }
+                }
+                valilista();
+                actualizar_lista();
+            };
+            editar = function (t) {
+                $('#act').val('edit');
+                if(tipo == "general"){
+                    var idpersona = $(t).attr('idpersona');
+                    var idarea = $(t).attr('idarea');
+                }else{
+                    var iddocente = $(t).attr('iddocente');
+                    var idasignatura = $(t).attr('idasignatura');
+                }
+                for(i=0; i<lista_items1.length; i++){
+                    if(tipo == "general"){
+                        if(lista_items1[i].action != "del" && lista_items1[i].idpersona == idpersona && lista_items1[i].idarea == idarea){
+                            $('#act_edit1').val(lista_items1[i].idpersona);
+                            $('#act_edit2').val(lista_items1[i].idarea);
+                            $('.areaid').val(lista_items1[i].idarea);
+                            $('#select2-id_area-container').text(lista_items1[i].area);
+                            $('#select2-id_area-container').attr('title', lista_items1[i].area);
+                            $('.personaid').val(lista_items1[i].idpersona);
+                            $('#select2-id_persona-container').text(lista_items1[i].persona);
+                            $('#select2-id_persona-container').attr('title', lista_items1[i].persona);
+                            $('.fechainicio').val(lista_items1[i].inicio);
+                            $('.fechafin').val(lista_items1[i].fin);
+                            $('.valicantidad').val(lista_items1[i].cantidad);
+                            if(lista_items1[i].activo == true) $('.valiactivo').attr('checked', 'checked');
+                            else $('.valiactivo').removeAttr('checked');
+                        }
+                    }else{
+                        if(lista_items1[i].action != "del" && lista_items1[i].iddocente == iddocente && lista_items1[i].idasignatura == idasignatura){
+                            $('#act_edit1').val(lista_items1[i].iddocente);
+                            $('#act_edit2').val(lista_items1[i].idasignatura);
+                            $('.mallaid').val(lista_items1[i].idmalla);
+                            $('#select2-id_malla-container').text(lista_items1[i].malla);
+                            $('#select2-id_malla-container').attr('title', lista_items1[i].malla);
+                            $('.asignaturaid').val(lista_items1[i].idasignatura);
+                            $('#select2-id_asignatura-container').text(lista_items1[i].asignatura);
+                            $('#select2-id_asignatura-container').attr('title', lista_items1[i].asignatura);
+                            $('.docenteid').val(lista_items1[i].iddocente);
+                            $('#select2-id_docente-container').text(lista_items1[i].docente);
+                            $('#select2-id_docente-container').attr('title', lista_items1[i].docente);
+                            $('.fechainicio').val(lista_items1[i].inicio);
+                            $('.fechafin').val(lista_items1[i].fin);
+                            $('.valicantidad').val(lista_items1[i].cantidad);
+                            if(lista_items1[i].activo == true) $('.valiactivo').attr('checked', 'checked');
+                            else $('.valiactivo').removeAttr('checked');
+
+                        }
+                    }
+                }
+            };
+        });
+    </script>
+{% endblock %}
+{% block titulo %}{{ title }} <br>
+{{ title2 }} desde ({{ asignacion.inicio|date:'d-m-Y' }}) hasta ({{  asignacion.fin|date:'d-m-Y' }})
+{% endblock %}
+{% block formadicional %}
+    <div class="row-fluid">
+        <button class="btn btn-mini btn-success tu pull-right add_docente"><i class="fa fa-plus"></i> Agregar</button>
+    </div>
+     <div class="movil-table">
+        <div class="tree well" style="overflow-y: auto;height: 450px; padding-top: 5px; padding-left: 5px; padding-right: 5px; padding-bottom: 5px;">
+        <table class="table table-bordered table-hover" id="idasihnaciones">
+            <thead>
+                <th>Formato</th>
+                {% if asignacion.formato.formatoreactivo.tiporeactivo.nombre == "GENERAL" %}
+                    <th>Área</th>
+                    <th>Persona</th>
+                {% else %}
+                    <th>Malla</th>
+                    <th>Asignatura</th>
+                    <th>Docente</th>
+
+                {% endif %}
+                    <th style="text-align: center; width: 10%">Inicio</th>
+                    <th style="text-align: center; width: 10%">Fin</th>
+                    <th style="text-align: center; width: 10%">Cantidad</th>
+                    <th style="text-align: center; width: 10%">Activo</th>
+                    <th style="text-align: center; width: 10%">Estado</th>
+                    <th style="text-align: center; width: 10%">Ajustes</th>
+            </thead>
+            <tbody id="tbody0">
+                {% for a in asignaciones %}
+                    <tr ida="{{ a.id }}" idasignacion="{{ a.asignacion.id }}" idformato="{{ a.formato.id }}" formato="{{ a.formato }}" iddocente="{{ a.docente.id }}" docente="{{ a.docente }}" idmateria="{{ a.materia.id }}" materia="{{ a.materia }}" idpersona="{{ a.persona.id }}" persona="{{ a.persona }}" idarea="{{ a.area.id }}" area="{{ a.area }}" inicio="{{ a.inicio|date:'d-m-Y' }}" fin="{{ a.fin|date:'d-m-Y' }}" cantidad="{{ a.cantidad }}" activo="{{ a.activo }}">
+                        <td>{{ a.formato.formatoreactivo }}</td>
+                        {% if asignacion.formato.formatoreactivo.tiporeactivo.nombre == "GENERAL" %}
+                            <td>{{ a.area }}</td>
+                            <td>{{ a.persona }}</td>
+                        {% else %}
+                            <td>{{ a.asignatura.malla }}</td>
+                            <td>{{ a.asignatura.asignatura }} - {{ a.asignatura.nivelmalla.nombre }}</td>
+                            <td>{{ a.docente }}</td>
+                        {% endif %}
+                        <td style="text-align: center">{{ a.inicio|date:'d-m-Y' }}</td>
+                        <td style="text-align: center">{{ a.fin|date:'d-m-Y' }}</td>
+                        <td style="text-align: center">{{ a.cantidad }}</td>
+                        <td style="text-align: center">
+                            {% if a.activo %}
+                                <i class="fa fa-check"></i>
+                            {% else %}
+                                <i class="fa fa-close" style="color: red"></i>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center">
+                            {% if a.estadofinal %}
+                                <i class="fa fa-check"></i>
+                            {% else %}
+                                <i class="fa fa-close" style="color: red"></i>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center">
+                            <button class="btn btn-warning btn-mini tu" title="Editar" onclick="editar(this)" {% if asignacion.formato.formatoreactivo.tiporeactivo.nombre == "GENERAL" %}idarea="{{ a.area.id }}" idpersona="{{ a.persona.id }}"{% else %}iddocente="{{ a.docente.id }}" idasignatura="{{a.asignatura.id}}"{% endif %}><i class="fa fa-edit"></i></button>
+                            <button class="btn btn-danger btn-mini tu" title="Eliminar" onclick="eliminar(this)" {% if asignacion.formato.formatoreactivo.tiporeactivo.nombre == "GENERAL" %}idarea="{{ a.area.id }}" idpersona="{{ a.persona.id }}"{% else %}iddocente="{{ a.docente.id }}" idasignatura="{{a.asignatura.id}}"{% endif %}><i class="fa fa-remove"></i></button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+     </div>
+{% endblock %}
+{% block formaction %}/cord_configuracioncomplexivo{% endblock %}
+{% block formdestination %}/cord_configuracioncomplexivo?action=adm_asignacionreactivo{% endblock %}
+{% block formextra %}
+    <input type='hidden' name='action' value='add_asignaciondocente'/>
+    <input type='hidden' id="valilista" name='valilista' value=""/>
+    <input type='hidden' id="asignacion" name='asignacion' value="{{ asignacion.id }}"/>
+    <input type='hidden' id="tipo" name='tipo' value="{{ asignacion.formato.formatoreactivo.tiporeactivo.nombre|lower }}"/>
+    <input type='hidden' id="act" value=""/>
+    <input type='hidden' id="act_edit1" value=""/>
+    <input type='hidden' id="act_edit2" value=""/>
+{% endblock %}
+{% block formback %}/cord_configuracioncomplexivo?action=adm_asignacionreactivo{% endblock %}
+{% block buttonname %}Guardar{% endblock %}
+{% block formwidth %}form-l{% endblock %}

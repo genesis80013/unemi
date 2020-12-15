@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block heading %}
+{% endblock %}
+{% block contenidopanel %}
+    <div class="row-fluid">
+        <div class="span12">
+            <h3>{{ title }}</h3>
+        </div>
+    </div>
+    <div class="row-fluid">
+        <table class="table table-bordered">
+            <thead>
+                <th>Facultad</th>
+                <th>Carrera</th>
+                <th>Estudiante</th>
+                <th>Periodo</th>
+                <th>Bateria/Mallas</th>
+                <th style="text-align:center ">Ajustes</th>
+            </thead>
+            <tbody>
+            {% for a in actuales %}
+                <tr>
+                    <td>{{ a.bateriacarrera.carrera.grupofacultad.facultad }}</td>
+                    <td>{{ a.bateriacarrera.carrera.carrera }}</td>
+                    <td>{{ a.matricula.inscripcion.persona }}</td>
+                    <td>{{ a.periodo}}</td>
+                    <td>BATERIA PARA {{ a.bateriacarrera.bateria.periodo }} {% if a.bateriacarrera.malla %}POR MALLA: {{ a.bateriacarrera.malla.malla }}{% else %}POR CARRERA{% endif %}</td>
+                    <td style="text-align: center;">
+                        <a class="btn btn-mini btn-success" href="/est_configuracioncomplexivo?action=adm_detallebateria&id={{ a.id }}"><i class="fa fa-eye"></i> Ver</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

@@ -1,0 +1,165 @@
+<script type="text/javascript">
+    $(function() {
+        var total = 0;
+        envioformulario = function(){
+            $('.datepicker').css({"display": "none"});
+            bloqueointerface();
+            var formdata = new FormData($("#formulario")[0]);
+            $.ajax({
+                type: "POST",
+                url: "{% block formaction %}/{% endblock %}",
+                data: formdata,
+                success: function(data) {
+                    if (data.result == 'ok') {
+                         {% block formdestination_java %}location.href = "{% block formdestination %}/{% endblock %}";{% endblock %}
+                    } else {
+                        $.unblockUI();
+                        abrirnotificacionmodal(data.mensaje);
+                    }
+                },
+                error: function() {
+                    $.unblockUI();
+                    abrirnotificacionmodal('Error de conexión.');
+                },
+                dataType: "json",
+                cache: false,
+                contentType: false,
+                processData: false
+            });
+        };
+
+        $("#eliminacionmodal_formbutton").click(function(){
+            $('#ajaxshowdinamicbs').modal('hide');
+            envioformulario();
+        });
+
+        $("#eliminacionmodal_cancel").click(function(){
+            $('#ajaxshowdinamicbs').modal('hide');
+            console.log("cord_configuracioncomplexivo?action=edit_bateriaexamen&id={{asignacion.id}}");
+            location.href = "cord_configuracioncomplexivo?action=edit_bateriaexamen&id={{asignacion.id}}";
+        });
+
+
+        $("#agregar").click(function(){
+            $('#ajaxshowdinamicbs').modal('hide');
+            for(i=0; i<lista_items1.length; i++){
+                if(lista_items1[i].id == {{ asignatura.id }}){
+                    lista_items1[i].reactivos = [];
+                    $('.selectreactivo:checked').each(function () {
+                        var item = {id: $(this).attr('idtr')};
+                         if(lista_items1[i].reactivos.length == 0){
+                             lista_items1[i].reactivos = [item];
+                         }else{
+                             lista_items1[i].reactivos.push(item);
+                         }
+                    });
+                }
+            }
+            console.log('Nuevo');
+            console.log(lista_items1);
+            actualizar_lista();
+            location.href = "/cord_configuracioncomplexivo?action=edit_bateriaexamen&id={{asignacioon.id}}";
+        });
+        var actualizar_lista= function(){
+            $('#tbody0').html('');
+            total = 0;
+            for(i=0; i<lista_items1.length; i++){
+                if(lista_items1[i].reactivos.length!=0){
+                    $('#tbody0').append('<tr>' +
+                        '<td>'+lista_items1[i].asignatura+'</td>' +
+                        '<td style="text-align: center;">'+lista_items1[i].total+'</td>' +
+                        '<td style="text-align: center;">'+lista_items1[i].reactivos.length+'</td>' +
+                        '<td style="text-align: center;" ><button class="btn btn-mini btn-warning" idtr="'+lista_items1[i].id+'" onclick="verseleccionados(this)"><i class="fa fa-eye"></i></button></td>' +
+                        '</tr>');
+                    total = total + lista_items1[i].reactivos.length;
+                }
+
+            }
+            $('#idt').val(total);
+            var count = {{ asignacion.tamaniobateria }};
+            if(total == count){
+                $('#vali').val('1');
+            }else{
+                $('#vali').val('0');
+            }
+        };
+
+        $('#selectreactivos').on('change', function () {
+            var vali = $(this).attr('checked');
+            if (vali){
+                $('.selectreactivo').attr('checked', 'checked');
+            }else{
+                $('.selectreactivo').removeAttr('checked');
+            }
+            $('#totalselect').text('Total: '+$('.selectreactivo:checked').length);
+        });
+
+        $('.selectreactivo').on('change', function () {
+            $('#totalselect').text('Total: '+$('.selectreactivo:checked').length);
+        });
+        var cargar2 = function(){
+
+            for(i=0; i<lista_items1.length;i++){
+                if(lista_items1[i].id=={{ asignatura.id }}){
+                    lista_items1[i].total = {{ reactivos|length }};
+                    if(lista_items1[i].reactivos.length != 0){
+                        $('.selectreactivo').removeAttr('checked');
+                    }
+                    for(j=0; j<lista_items1[i].reactivos.length; j++){
+                        $('#ch_'+lista_items1[i].reactivos[j].id).attr('checked', 'checked');
+                    }
+                    break;
+                }
+            }
+            total = $('.selectreactivo:checked').length;
+            $('#totalselect').text('Total: '+total);
+        };
+        window.onloadend = cargar2();
+    });
+</script>
+{% block canvas %}
+    <div id="ajaxshowdinamicbs"></div>
+    <div class="modal-header"><h5>Reactivos de {{title}}</h5></div>
+    <div class="modal-body">
+        <div id="reactivosadd" class="tree well" style="overflow-y: auto;height: 400px; padding-top: 5px; padding-left: 5px; padding-right: 5px; padding-bottom: 5px;">
+            <table class="table table-bordered">
+                <thead>
+                    <th colspan="2">Detalles</th>
+                    <th>Opciones</th>
+                    <th style="text-align: center">Selección <input type="checkbox" id="selectreactivos"></th>
+                </thead>
+                <tbody>
+                {% for r in reactivos %}
+                    <tr>
+                        <td>
+                            <label><b>TIPO DE PREGUNTA: </b>{{r.reactivo.tipopregunta}}</label>
+                            <label><b>CALIFICACIÓN: </b>{{r.reactivo.nota}}</label>
+                            <label><b>ALEATORIO: </b>{% if r.reactivo.aleatorio %}<i class="fa fa-check"></i>{% else %}<i class="fa fa-close"></i>{% endif %}</label>
+                        </td>
+                        <td>
+                            {% for a in r.atributos %}
+                                <label><b>{{ a.atributo }}: </b>{{ a.texto }}{% if a.archivo %} <a class="btn btn-mini btn-warning" target="_blank" href="{{ a.archivo.url }}"><i class="fa fa-image"></i></a>{% endif %}</label>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% for a in r.opciones %}
+                                <label><b>{{ forloop.counter }}: </b>{{ a.texto }}</label>
+                            {% endfor %}
+                        </td>
+                        <td style="text-align: center">
+                            <input type="checkbox" class="selectreactivo" id="ch_{{ r.reactivo.id }}" idtr="{{ r.reactivo.id }}" {% if r.vali %}checked{% endif %}>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <h5 id="totalselect">Total: 0</h5>
+    </div>
+    <div class="modal-footer">
+        <p style="text-align: right; margin-bottom: 0">
+            <a href="javascript:;" id="agregar" class="btn btn-success"> Agregar</a>
+            <a href="javascript:;" id="eliminacionmodal_cancel" class="btn btn-danger"> Cerrar</a>
+        </p>
+    </div>
+{% endblock %}

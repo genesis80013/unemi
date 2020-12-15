@@ -1,0 +1,17 @@
+{% extends "ajaxformbase.html" %}
+{% block extraheading %}
+    <script type="text/javascript">
+        $(function() {
+            $("#id_nombre").addClass("validate[required]");
+        });
+    </script>
+{% endblock %}
+{% block titulo %}{{ title }}{% endblock %}
+{% block formwidth %}form-l{% endblock %}
+{% block formaction %}/adm_configuracioncomplexivo{% endblock %}
+{% block formdestination %}/adm_configuracioncomplexivo?action=adm_areareactivo{% endblock %}
+{% block formextra %}
+    <input type='hidden' name='action' value='add_areareactivo'/>
+{% endblock %}
+{% block formback %}/adm_configuracioncomplexivo?action=adm_areareactivo{% endblock %}
+{% block buttonname %}Guardar{% endblock %}

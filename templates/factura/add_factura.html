@@ -1,0 +1,104 @@
+{% extends "formajax.html" %}
+{% block ajaxextra %}
+    <script type="text/javascript">
+        $(function() {
+            $("#id_nombrecliente, #id_ruccliente").addClass("validate[required]");
+            $(".add_pro").click(function () {
+                $('#myModal').modal('show')
+            });
+
+            $("#agregar").click(function () {
+                var producto = $("#producto").val()
+                var cantidad = $("#cantidad").val()
+                var precio = $("#precio").val()
+                var subtotal = parseFloat(precio)* parseInt(cantidad);
+                $('#tablaProducto').append('<tr pro="'+producto+'" can="'+cantidad+'" pre="'+precio+'"><td></td><td>'+producto+'</td><td>'+cantidad+'</td><td>'+precio+'</td><td>'+subtotal.toFixed(2)+'</td></tr>');
+                $('#myModal').modal('hide')
+                actualizar_lista();
+            }) ;
+            actualizar_lista = function () {
+                var ban = 0;
+                lista_items1 = [];
+                $('#tablaProducto tr').each(function() {
+                    if(ban == 0){
+                        ban=1;
+                    }else{
+                        var item = {producto: $(this).attr("pro"), precio: $(this).attr("pre"), cantidad: $(this).attr("can")};
+                        lista_items1.push(item);
+
+
+
+                    }
+                });
+            }
+        });
+
+
+    </script>
+{% endblock %}
+{% block titulo %}{{ title }}{% endblock %}
+{% block formaction %}/factura{% endblock %}
+{% block formdestination %}/factura{% endblock %}
+{% block formtagextra %}"{% endblock %}
+{% block formextra %}
+
+    {% if factura %}
+        <input type='hidden' name='action' value='edit_factura'/>
+        <input type='hidden' name='id' value='{{ factura.id }}'/>
+    {% else %}
+        <input type='hidden' name='action' value='add_factura'/>
+    {% endif %}
+{% endblock %}
+{% block buttonname %}Guardar factura{% endblock %}
+
+{% block detalle %}
+    <table class="table table-bordered" id="tablaProducto">
+        <thead>
+        <tr>
+            <th style="width: 20px"><a class="btn btn-success btn-mini add_pro"><i class="icon-plus"></i></a></th>
+            <th>Producto</th>
+            <th style="width: 80px; text-align: center">Cantidad</th>
+            <th style="width: 80px; text-align: center">Precio</th>
+            <th style="width: 80px; text-align: center">SubTotal</th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <div class="modal hide fade" id="myModal">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h3>Producto</h3>
+        </div>
+        <div class="modal-body">
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <td>Producto</td>
+                    <td style="width: 80px; text-align: center"> <input type="text" id="producto"> </td>
+
+                </tr>
+                <tr>
+                    <td>Cantidad</td>
+                    <td style="width: 80px; text-align: center"> <input type="text" id="cantidad"> </td>
+
+                </tr>
+                <tr>
+                    <td>Precio</td>
+                    <td style="width: 80px; text-align: center"> <input type="text" id="precio"> </td>
+
+                </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+        <div class="modal-footer">
+            <a href="#" class="btn btn-success" id="agregar">Agregar Producto</a>
+
+            <a href="#" class="btn btn-danger" id="cerrar">Cerrar</a>
+        </div>
+    </div>
+{% endblock %}
+

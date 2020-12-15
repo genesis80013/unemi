@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block contenidopanel %}
+    <div class="row-fluid">
+        <h3>{{ title }}</h3>
+    </div>
+    <div class="row-fluid">
+        <table class="table table-bordered">
+            <thead>
+                <th>Estudiante</th>
+                <th>Carrera</th>
+                <th>Periodo</th>
+                <th>Tipo de titulación</th>
+                <th style="text-align: center;">Simulación</th>
+            </thead>
+            <tbody>
+            {% for a in matriculas %}
+                <tr>
+                    <td>
+                        {{ a.inscripcion.persona }}
+                    </td>
+                    <td>
+                        {{ a.alternativa.carrera }}
+                    </td>
+                    <td>
+                        {{ a.alternativa.grupotitulacion.periodogrupo.periodo.nombre }}
+                    </td>
+                    <td>
+                        {{ a.alternativa.tipotitulacion.mecanismotitulacion.mecanismotitulacion.nombre}}
+                    </td>
+                    <td style="text-align: center;">
+                        <a class="btn btn-mini btn-warning" href="/est_configuracioncomplexivo?action=view_simulacionexamen&id={{ a.id }}" title="Ver"> <i class="fa fa-eye"></i> </a>
+                        <a class="btn btn-mini btn-success" href="/est_configuracioncomplexivo?action=add_simulacionexamen&id={{ a.id }}" title="Simular"> <i class="fa fa-plus"></i> </a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

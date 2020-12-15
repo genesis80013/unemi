@@ -1,0 +1,136 @@
+<script type="text/javascript">
+    $(function() {
+
+        envioformulario = function(){
+            $('.datepicker').css({"display": "none"});
+            bloqueointerface();
+            var formdata = new FormData($("#formulario")[0]);
+            $.ajax({
+                type: "POST",
+                url: "{% block formaction %}/{% endblock %}",
+                data: formdata,
+                success: function(data) {
+                    if (data.result == 'ok') {
+                         {% block formdestination_java %}location.href = "{% block formdestination %}/{% endblock %}";{% endblock %}
+                    } else {
+                        $.unblockUI();
+                        abrirnotificacionmodal(data.mensaje);
+                    }
+                },
+                error: function() {
+                    $.unblockUI();
+                    abrirnotificacionmodal('Error de conexión.');
+                },
+                dataType: "json",
+                cache: false,
+                contentType: false,
+                processData: false
+            });
+        };
+
+        $("#eliminacionmodal_formbutton").click(function(){
+            $('#ajaxshowdinamicbs').modal('hide');
+            envioformulario();
+        });
+
+        $("#eliminacionmodal_cancel").click(function(){
+            $('#ajaxshowdinamicbs').modal('hide');
+        });
+    });
+</script>
+{% block extrascript %}
+
+{% endblock %}
+{% block canvas %}
+    <div id="ajaxshowdinamicbs"></div>
+    <div class="modal-header"><h4>{% block titulo %}{% endblock %}</h4></div>
+    <div class="modal-body" style="min-height: 60px">
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr><th colspan="10" style="text-align: center">{{title}}</th> </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>Nombre: </b></td>
+                    <td style="width: 80%" colspan="3">{{ cronograma.nombre }}</td>
+                </tr>
+                <tr>
+                    <td><b>Período académico: </b></td>
+                    <td style="width: 80%" colspan="3">{{ cronograma.periodo }}</td>
+                </tr>
+                <tr>
+                    <td style="width: 10%"><b>Inicio: </b></td>
+                    <td style="width: 40%">{{ cronograma.inicio|date:'d-m-Y' }}</td>
+                    <td style="width: 10%"><b>Fin: </b></td>
+                    <td style="width: 40%">{{ cronograma.fin|date:'d-m-Y' }}</td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Porcentaje de similitud: </b>
+                    </td>
+                    <td style="width: 80%" colspan="3">
+                        {{ cronograma.porcsimilitud}} %
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr><th colspan="10" style="text-align: center">Formatos para examen complexivo</th> </tr>
+            </thead>
+            <tbody>
+                {% for f in formatos %}
+                    <tr>
+                        <td>{{ f.formatoreactivo }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr><th colspan="10" style="text-align: center">Asignación de reactivos generales</th> </tr>
+                <tr><th>Docente</th><th>Formato</th><th>Inicio</th><th>Fin</th><th style="text-align: center">Bateria</th><th style="text-align: center">Asignación a docentes</th></tr>
+            </thead>
+            <tbody>
+                {% for g in general %}
+                    <tr>
+                        <td>{{ g.persona }}</td>
+                        <td>{{ g.formato.formatoreactivo }}</td>
+                        <td>{{ g.inicio|date:'d-m-Y' }}</td>
+                        <td>{{ g.fin|date:'d-m-Y' }}</td>
+                        <td style="text-align: center">{{ g.tamaniobateria }}</td>
+                        <td style="text-align: center">{% if g.activoasignar == True %}<i class="fa fa-check"></i>{% else %}<i style="color: red" class="fa fa-close"></i>{% endif %}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="tree well" style="overflow-y: auto;height: 250px; padding-top: 5px; padding-left: 5px; padding-right: 5px; padding-bottom: 5px;">
+        <table class="table table-bordered table-hover">
+                <thead>
+                    <tr><th colspan="10" style="text-align: center">Asignación de reactivos específicos</th> </tr>
+                    <tr><th>Facultad</th><th>Carrera</th><th>Malla</th><th>Coordinador</th><th>Formato</th><th>Inicio</th><th>Fin</th><th style="text-align: center">Bateria</th><th style="text-align: center">Asignación a docentes</th></tr>
+                </thead>
+                <tbody>
+                    {% for g in especifico %}
+                        <tr>
+                            <td>{{ g.grupocarrera.grupofacultad.facultad }}</td>
+                            <td>{{ g.grupocarrera.carrera }}</td>
+                            <td>{{ g.grupomalla.malla }}</td>
+                            <td>{{ g.coordinador }}</td>
+                            <td>{{ g.formato.formatoreactivo }}</td>
+                            <td>{{ g.inicio|date:'d-m-Y' }}</td>
+                            <td>{{ g.fin|date:'d-m-Y' }}</td>
+                            <td style="text-align: center">{{ g.tamaniobateria }}</td>
+                            <td style="text-align: center">{% if g.activoasignar == True %}<i class="fa fa-check"></i>{% else %}<i style="color: red" class="fa fa-close"></i>{% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <p style="text-align: right; margin-bottom: 0">
+            <a href="javascript:;" id="eliminacionmodal_cancel" class="btn btn-info"> Cerrar</a>
+        </p>
+    </div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block contenidopanel %}
+    <div class="row-fluid">
+        <a class="btn btn-info pull-right" href="/est_configuracioncomplexivo?action=view_simulacionexamen&id={{ simulacion.matricula.id }}">Salir</a>
+        <h5>{{ title }}</h5>
+    </div>
+    <div class="row-fluid">
+        <h5>Resumen</h5>
+    </div>
+    <div class="row-fluid">
+        <table class="table table-bordered">
+            <thead>
+                <th>Estudiante</th>
+                <th>Bateria</th>
+                <th style="text-align: center;">Cantidad</th>
+                <th style="text-align: center;">Aciertos</th>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ simulacion.matricula.inscripcion.persona }}</td>
+                    <td>BATERIA DE {{ simulacion.bateriacarrera.carrera.carrera }} EN {{ simulacion.bateriacarrera.bateria.periodo }}</td>
+                    <td style="text-align: center;">{{ simulacion.cantidad }}</td>
+                    <td style="text-align: center;">{{ aciertos }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="row-fluid">
+        <h5>Detalle de simulación</h5>
+    </div>
+    <div class="row-fluid">
+        {% for i in reactivos %}
+        <div class="row-fluid" style="text-align: center;">
+            <div class="span12">
+                <div class="well" style="width: 100%; display: inline-block;">
+                    <table class="table" style="text-align: center; width: 100%; background-color: transparent">
+                        <tr style="border: hidden">
+                            <td style="width: 10%"><b>N°: </b>{{ forloop.counter }}</td>
+                            <td style="width: 50%"><b>Sección: </b>{% if i.reactivo.asignaciondocente.area %}{{ i.reactivo.asignaciondocente.area.nombre }}{% else %}{{ i.reactivo.asignaciondocente.asignatura.asignatura.nombre }}{% endif %}</td>
+                            <td style="width: 20%"><b>Tipo de pregunta: </b>{{ i.reactivo.tipopregunta }}</td>
+                            <td><b>Calificación: </b>{{ i.reactivo.nota }} puntos</td>
+                            <td>{% if i.vali %}<i class="fa fa-check" style="color: green; font-size: 24px;"></i>{% else %}<i class="fa fa-close" style="color: red; font-size: 24px; "></i>{% endif %}</td>
+                        </tr>
+                        {% for a in i.atributos %}
+                        <tr style="border: hidden">
+                            <td colspan="5"><b>{{ a.atributo__nombre }}</b>: {{ a.texto }}
+                                {% if a.archivo %}
+                                    <img src="/media/{{ a.archivo }}">
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        <tr>
+                            <td colspan="5"><b>OPCIONES: </b> {% if i.reactivo.tipopregunta.nombre == "EMPAREJAMIENTO" %}
+                                {% for o in i.listaextra %}
+                                    {% if o.vali is False %}
+                                        <span  class="badge badge-warning" id="lb_{{ o.id }}" idtr="{{ o.id }}" style="font-size: 14px">{{ o.texto }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}</td>
+                        </tr>
+                        {% for o in i.opciones %}
+                        <tr>
+                        {% if i.reactivo.tipopregunta.nombre != "EMPAREJAMIENTO" %}
+                            <td colspan="5" style="border: hidden; border-radius: 40px; background-color: {% if o.vali is True and o.estado is True %}#D9F6B9{% elif o.vali is True and o.estado is False %}#F6C3B9{% endif %}">
+                                <h5>{{ forloop.counter }}. {{ o.texto }} {% if o.archivo %} <img src="/media/{{ o.archivo }}">{% endif %}</h5>
+                            </td>
+                        {% else %}
+                            <td colspan="5" style="border: hidden; border-radius: 40px; background-color: {% if o.id == o.id2 %}#D9F6B9{% elif o.id2 is None %}transparent{% else %}#F6C3B9{% endif %}">
+                                <h5>{{ forloop.counter }}. {{ o.texto }} {% if o.texto2 is not None %} - {{ o.texto2 }}{% endif %}</h5>
+                            </td>
+                        {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+    {% endfor %}
+    </div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% for atributo in atributos %}
+    <div class="control-group cont-100" style="padding: 1%; min-height:45px; float: left;">
+        <div class="control-label" style="width: 120px; text-align: right; line-height: 20px; padding-right: 10px;padding-top: 20px; float: left; text-transform: capitalize">
+            <h5>{{ atributo.nombre.lower }} <button class="btn btn-mini btn-warning" onclick="alertadetalle(this)" mensaje="{{ atributo.detalle }}"><i class="fa fa-info"></i></button></h5>
+        </div>
+        <div class="controls cont-div-100">
+            <table style="width: 100%; background-color: transparent; border: hidden;">
+                <tr>
+                    <td style="border: hidden; width: 80%">
+                        <textarea class="validate[required] detallereactivo" style="text-transform: none;" rows="2" formwidth="100" tipo="atr" idatributo="{{ atributo.id }}" opr="" valp=""></textarea>
+                    </td>
+                    <td style="border: hidden; text-align: left">
+                        <div style="padding-top: 10px; "><input type="file" name="image_{{ atributo.id}}" id="image_{{ atributo.id }}" formwidth="20" accept="image/*" idatributo="{{ atributo.id }}" tipo="atr" opr="" valp="" class="fileatributo"></div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+{% endfor %}

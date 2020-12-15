@@ -1,0 +1,126 @@
+<script type="text/javascript">
+    $(function() {
+
+        envioformulario = function(){
+            $('.datepicker').css({"display": "none"});
+            bloqueointerface();
+            var formdata = new FormData($("#formulario")[0]);
+            $.ajax({
+                type: "POST",
+                url: "{% block formaction %}/{% endblock %}",
+                data: formdata,
+                success: function(data) {
+                    if (data.result == 'ok') {
+                         {% block formdestination_java %}location.href = "{% block formdestination %}/{% endblock %}";{% endblock %}
+                    } else {
+                        $.unblockUI();
+                        abrirnotificacionmodal(data.mensaje);
+                    }
+                },
+                error: function() {
+                    $.unblockUI();
+                    abrirnotificacionmodal('Error de conexión.');
+                },
+                dataType: "json",
+                cache: false,
+                contentType: false,
+                processData: false
+            });
+        };
+
+        $("#eliminacionmodal_formbutton").click(function(){
+            $('#ajaxshowdinamicbs').modal('hide');
+            envioformulario();
+        });
+
+        $("#eliminacionmodal_cancel").click(function(){
+            $('#ajaxshowdinamicbs').modal('hide');
+        });
+    });
+</script>
+{% block extrascript %}
+
+{% endblock %}
+{% block canvas %}
+    <div id="ajaxshowdinamicbs"></div>
+    <div class="modal-header"><h4>{% block titulo %}{% endblock %}</h4></div>
+    <div class="modal-body" style="min-height: 60px">
+        <div class="tree well" style="overflow-y: auto;height: 450px; padding-top: 5px; padding-left: 5px; padding-right: 5px; padding-bottom: 5px;">
+        <table class="table table-bordered table-hover">
+                <thead>
+                <tr><th colspan="10" style="text-align: center">{{title}}</th> </tr>
+                <tr>
+                    {% if asignacion.formato.formatoreactivo.tiporeactivo.nombre == 'GENERAL' %}
+                        <th style="width: 20%">Persona</th>
+                        <th style="width: 20%">Area</th>
+                    {% else %}
+                        <th style="width: 20%">Asignatura</th>
+                        <th style="width: 20%">Docente</th>
+                    {% endif %}
+                        <th style="width: 20%">Formato</th>
+                        <th style="width: 10%; text-align: center">Cantidad</th>
+                        <th style="width: 10%; text-align: center">Inicio</th>
+                        <th style="width: 10%; text-align: center">fin</th>
+                        <th style="width: 5%; text-align: center">Estado final</th>
+                        <th style="width: 5%; text-align: center">Activo</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for p in asignaciones %}
+                    <tr>
+                    {% if asignacion.formato.formatoreactivo.tiporeactivo.nombre == 'GENERAL' %}
+                        <td>
+                            {{ p.persona }}
+                        </td>
+                        <td>
+                            {{ p.area }}
+                        </td>
+                    {% else %}
+                        <td>
+                            {{ p.asignatura.asignatura }}
+                        </td>
+                        <td>
+                            {{ p.docente }}
+                        </td>
+                    {% endif %}
+                        <td>
+                            {{ p.formato.formatoreactivo }}
+                        </td>
+                        <td style="text-align: center;">
+                            {{ p.cantidad }}
+                        </td>
+                        <td style="text-align: center;">
+                            {{ p.inicio|date:'d-m-Y' }}
+                        </td>
+                        <td style="text-align: center;">
+                            {{ p.fin|date:'d-m-Y' }}
+                        </td>
+                        <td style="text-align: center;">
+                            {% if p.estadofinal %}
+                                <i class="fa fa-check"></i>
+                            {% else %}
+                                <i class="fa fa-close" style="color: red;"></i>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            {% if p.activo %}
+                                <i class="fa fa-check"></i>
+                            {% else %}
+                                <i class="fa fa-close" style="color: red;"></i>
+                            {% endif %}
+                        </td>
+                        {% empty %}
+                        <td style="text-align: center" colspan="12">NO EXISTEN REGISTROS</td>
+                    </tr>
+                {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <p style="text-align: right; margin-bottom: 0">
+            <a href="javascript:;" id="eliminacionmodal_cancel" class="btn btn-info"> Cerrar</a>
+        </p>
+    </div>
+{% endblock %}

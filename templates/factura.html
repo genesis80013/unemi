@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block heading %}
+
+    <script src="/static/js/smoke.min.js" type="text/javascript"></script>
+    <script src="/static/js/bs/bootstrap.min.js"></script>
+
+{% endblock %}
+{% block contenido %}
+<h3>Usuario: {{ user }}</h3>
+<h2>Factura</h2>
+<a class="btn btn-success" href="/factura?action=add_factura">
+    <i class="icon-plus"></i> Agregar Factura
+</a>
+<table class="table table-bordered">
+    <thead>
+    <tr>
+        <th>Ruc/Cedula</th>
+        <th style="width: 50px">Cliente</th>
+        <th style="width: 100px"></th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for f in factura %}
+    <tr>
+        <td>
+            {{ f.ruccliente }}</td>
+        <td style="text-align: center"> {{ f.nombrecliente }}
+        </td>
+        <td>
+            <a class="btn btn-warning" href="/pais?action=edit_factura&id={{ f.id }}">
+                <i class="icon-edit btn-mini"></i>
+            </a>
+            <a class="btn btn-danger" href="javascript:;" onclick="eliminar({{ f.id }})">
+                <i class="icon-remove btn-mini"></i>
+            </a>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+

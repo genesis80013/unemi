@@ -1,0 +1,41 @@
+{% load widget_tweaks %}
+<form method="post" novalidate>
+    {% csrf_token %}
+
+    {% for hidden_field in form.hidden_fields %}
+        {{ hidden_field }}
+    {% endfor %}
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger" role="alert">
+            {% for error in form.non_field_errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% for field in form.visible_fields %}
+        <div id="fieldset_{{ field.name }}" class="control-group cont-{{ field.field.widget.attrs.formwidth }}" style="padding: 1%; min-height:45px; float: left; {% if not field.field.widget.attrs.formwidth %} width: 100%{% endif %}">
+            <div class="control-label" style="line-height: 20px; text-align: right; padding-right: 10px">
+                {{ field.label }}
+            </div>
+            {% if form.is_bound %}
+                {% if field.errors %}
+                    {% render_field field class="form-control is-invalid" %}
+                    {% for error in field.errors %}
+                        <div class="invalid-feedback">
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    {% render_field field class="form-control is-valid" %}
+                {% endif %}
+            {% else %}
+                <div class="controls cont-div-{{ field.field.widget.attrs.formwidth }}">
+                    {% render_field field %}
+                    <p class="help-text" style="font-size: 10px; margin: 0; padding: 0; line-height: 1.1;" alert="{{ field.help_text }}">{{ field.help_text }}</p>
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+</form>

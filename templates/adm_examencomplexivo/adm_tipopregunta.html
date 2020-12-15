@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block heading %}
+
+{% endblock %}
+{% block contenidopanel %}
+    <div class="row-fluid">
+        <div class="span12">
+            <h3>{{ title }}</h3>
+        </div>
+    </div>
+
+    <div class="row-fluid">
+        <div class="span12">
+            <a class="btn btn-success" href="/adm_configuracioncomplexivo?action=add_tipopregunta"><i class="fa fa-plus"></i> Agregar tipo de pregunta</a>
+        </div>
+    </div>
+    <div class="row-fluid">
+        <div class="span12">
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th style="width: 10%">Abreviatura</th>
+                    <th style="width: 10%; text-align: center">Activo</th>
+                    <th style="width: 10%; text-align: center">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for p in tipopregunta %}
+                    <tr>
+                        <td>
+                            {{ p }}
+                        </td>
+                        <td>
+                            {{ p.abreviatura }}
+                        </td>
+                        <td style="text-align: center">
+                            {% if p.activo %}
+                                <i class="fa fa-check"></i>
+                            {% else %}
+                                <i class="fa fa-close" style="color: red"></i>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center">
+                            <a href="/adm_configuracioncomplexivo?action=edit_tipopregunta&id={{ p.id }}" class="btn btn-info btn-mini tu" title="Editar"><i class="fa fa-edit"></i></a>
+                            <a href="javascript:;" nhref="/adm_configuracioncomplexivo?action=del_tipopregunta&id={{ p.id }}" class="btn btn-danger btn-mini eliminacionmodal tu" title="Eliminar"><i class="fa fa-remove"></i></a>
+                        </td>
+                        {% empty %}
+                        <td style="text-align: center" colspan="12">NO EXISTEN REGISTROS</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

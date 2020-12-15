@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block heading %}
+
+{% endblock %}
+{% block contenidopanel %}
+    <div class="row-fluid">
+        <div class="span12">
+            <h3>{{ title }}</h3>
+        </div>
+    </div>
+
+    <div class="row-fluid">
+        <div class="span12">
+            <a class="btn btn-success" href="/adm_configuracioncomplexivo?action=add_asignacioncoordinador&idcro={{ cronograma.id }}"><i class="fa fa-plus"></i> Agregar coordinador</a>
+        </div>
+    </div>
+    <div class="row-fluid">
+        <div class="span12">
+        {% for g in grupos %}
+            <table class="table table-bordered table-hover">
+                <thead ><th colspan="12">CRONOGRAMA PARA {{ g.facultad.facultad }}</th></thead>
+                <tbody>
+                    {% for c in g.carreras %}
+                        <tr>
+                        <td>
+                            <table  class="table table-bordered table-hover">
+                                <thead>
+                                <tr><th colspan="12">{{ c.carrera.carrera }} (TIPO DE ASIGNACION: {% if c.carrera.activocarrera %}CARRERA{% else %}MALLA{% endif %})</th></tr>
+                                    <tr><th>Coordinador</th><th>Malla</th><th>Formato</th><th>Bateria</th><th>Inicio</th><th>Fin</th><th style="text-align: center">Asignar docentes</th></tr>
+                                </thead>
+                                <tbody>
+                                {% for car in c.asignaciones %}
+                                    <tr><td style="width: 25%">
+                                        {{ car.coordinador }}
+                                    </td>
+                                    <td style="width: 25%">
+                                        {% if car.grupocarrera.activocarrera %}
+                                            <ul>
+                                            {% for m in c.mallas %}
+                                                <li>{{ m.malla }}</li>
+                                            {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            {{ car.grupomalla.malla }}
+                                        {% endif %}
+                                    </td>
+                                    <td style="width: 25%">
+                                        {{ car.formato.formatoreactivo }}
+                                    </td>
+                                    <td>
+                                        {{ car.tamaniobateria }}
+                                    </td>
+                                    <td>
+                                        {{ car.inicio|date:'d-m-Y' }}
+                                    </td>
+                                    <td>
+                                        {{ car.fin|date:'d-m-Y' }}
+                                    </td>
+                                    <td style="text-align: center; width: 5%">
+                                        {% if car.activoasignar %}
+                                            <i class="fa fa-check"></i>
+                                        {% else %}
+                                            <i class="fa fa-close"></i>
+                                        {% endif %}
+                                    </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endfor %}
+        </div>
+    </div>
+    <a class="pull-right btn btn-danger" href="/adm_configuracioncomplexivo?action=adm_cronogramaplanificacion">Regresar </a>
+{% endblock %}

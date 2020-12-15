@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block contenidopanel %}
+    <div class="row-fluid">
+    <a class="btn btn-mini btn-info pull-right" href="/adm_configuracioncomplexivo?action=ver_bateriageneral&id={{ bateria.id }}">Volver</a>
+        <h5>{{ title }}</h5>
+    </div>
+    <div class="row-fluid">
+        <div class="span12">
+            {% for r in reactivos %}
+                <div class="well">
+                    <table class="table table-bordered">
+                        <tr>
+                            <td style="width: 30%">
+                                <label><b>N°: </b>{{ forloop.counter }}</label>
+                                <label><b>Asignatura: </b>{{ asignatura.asignatura.nombre }}</label>
+                                <label><b>Tipo: </b>{{ r.tipo }}</label>
+                                <label><b>Nota: </b>{{ r.nota }}</label>
+                            </td>
+                        </tr>
+                        {% for a in r.atributos %}
+                           <tr>
+                                <td><label><b>{{ a.atributo__nombre }}: </b>{{ a.texto }} {% if a.archivo %}<img src="/media/{{ a.archivo }}">{% endif %}</label></td>
+                           </tr>
+                        {% endfor %}
+                        <tr>
+                           <td colspan="2"><b>OPCIONES: </b>{% if r.tipo == "EMPAREJAMIENTO" %}
+                               {% for o in r.opciones %}
+                                   <span class="badge badge-info">{{ o.texto2 }}</span>
+                               {% endfor %}
+                           {% endif %}</td>
+                        </tr>
+                        {% for o in r.opciones %}
+                            <tr>
+                                <td colspan="2">
+                                    <b>{{ forloop.counter }}. </b>
+                                    {{ o.texto }}
+                                    {% if o.archivo %}
+                                        <img src="/media/{{ o.archivo }}">
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

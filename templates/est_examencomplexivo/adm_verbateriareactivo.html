@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block heading %}
+{% endblock %}
+{% block contenidopanel %}
+    <div class="row-fluid">
+        <div class="span12">
+            <h5>{{ title }}</h5>
+        </div>
+    </div>
+    <div class="row-fluid">
+    {% for r in reactivos %}
+        <div class="well">
+        <table class="table table-bordered table-striped">
+        <tbody>
+            <tr>
+                <td style="width: 5%"><b>N°: </b>{{ forloop.counter }}</td>
+                <td style="width: 20%"> <b>Materia/área: </b>{{ nombre }}</td>
+                <td style="width: 20%"> <b>Tipo de pregunta: </b>{{ r.tipo }}</td>
+                <td><b>Calificación de pregunta: </b>{{ r.nota }} puntos</td>
+            </tr>
+            {% for o in r.atributos %}
+                <tr>
+                    <td colspan="1"><b>{{ o.atributo__nombre }}: </b></td>
+                    <td colspan="12">{{ o.texto }} {% if o.archivo %}<img src="/media/{{ o.archivo }}">{% endif %}</td>
+                </tr>
+            {% endfor %}
+            {% if r.tipo == "EMPAREJAMIENTO" %}
+                <tr>
+                        <td><b>OPCIONES: </b></td>
+                        <td colspan="6"><b>A</b></td>
+                        <td colspan="6"><b>B</b></td>
+                    </tr>
+            {% else %}
+                <tr><td colspan="15"><b>OPCIONES:</b></td></tr>
+            {% endif %}
+            {% for o in r.opciones %}
+                {% if r.tipo != "EMPAREJAMIENTO" %}
+                <tr>
+                    <td><b>{{ forloop.counter }}.</b></td>
+                    <td colspan="12">{{ o.texto }} {% if o.archivo %}<img src="/media/{{ o.archivo }}">{% endif %}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td><b>{{ forloop.counter }}.</b></td>
+                    <td colspan="6">{{ o.texto }} {% if o.archivo %}<img src="/media/{{ o.archivo }}">{% endif %}</td>
+                    <td colspan="6">{{ o.texto2 }} {% if o.archivo %}<img src="/media/{{ o.archivo }}">{% endif %}</td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+        </table>
+        </div>
+    {% endfor %}
+    </div>
+    <div class="row-fluid">
+        <a class="btn btn-danger btn-lg pull-right" href="/est_configuracioncomplexivo?action=adm_detallebateria&id={{ bateria.id }}">Volver</a>
+    </div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "ajaxformbase.html" %}
+{% block extraheading %}
+<script type="text/javascript">
+$(function() {
+    $('.planificacionid').on('change', function () {
+                var id = $(this).val();
+                if(id!=""){
+
+                    $('.carreraid').val('');
+                    $('.carreraid').html('');
+                    $('#select2-id_carrera-container').attr('title','---------------');
+                    $('#select2-id_carrera-container').text('---------------');
+                    var formdata = new FormData();
+                    formdata.append('action','listar_cronogramacarreras');
+                    formdata.append('idcronograma',id)
+                    $.ajax({
+                        type: "POST",
+                        url: "/adm_configuracioncomplexivo",
+                        data: formdata,
+                        success: function(data) {
+                            $('.carreraid').html('<option value="">--------------------</option>');
+                            if (data.result == 'ok') {
+                                for(detalle in data.mensaje){
+                                    $('.carreraid').append('<option value="'+data.mensaje[detalle]['id']+'">'+data.mensaje[detalle]['carrera__nombre']+'</option>');
+                                }
+                            } else {
+                                if (data.result == 'session') {
+                                    location.href='/';
+                                }else{
+                                    smoke.alert(data.mensaje);
+                                }
+                            }
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(thrownError);
+                        },
+                        dataType: "json",
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    });
+                }else{
+                    $('.carreraid').val('');
+                    $('.carreraid').html('');
+                    $('#select2-id_carrera-container').attr('title','---------------');
+                    $('#select2-id_carrera-container').text('---------------');
+                }
+            });
+});
+</script>
+{% endblock %}
+{% block titulo %}{{ title }}{% endblock %}
+{% block formwidth %}form-l{% endblock %}
+{% block formaction %}/adm_configuracioncomplexivo{% endblock %}
+{% block formdestination %}/adm_configuracioncomplexivo?action=adm_cronogramaexamen{% endblock %}
+{% block formextra %}
+    <input type='hidden' name='action' value='edit_cronogramaexamen'/>
+    <input type='hidden' name='id' value='{{examen.id}}'/>
+{% endblock %}
+{% block formback %}/adm_configuracioncomplexivo?action=adm_cronogramaexamen{% endblock %}
+{% block buttonname %}Guardar{% endblock %}

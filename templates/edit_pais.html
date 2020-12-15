@@ -1,0 +1,15 @@
+{% extends "formajax.html" %}
+{% block ajaxextra %}
+    <script type="text/javascript">
+        $(function() {
+           $("#id_nombre").addClass("validate[required]");
+        });
+    </script>
+{% endblock %}
+{% block titulo %}{{ title }}{% endblock %}
+{% block formaction %}/pais{% endblock %}
+{% block formdestination %}/{% endblock %}
+{% block formextra %}
+    <input type='hidden' name='action' value='edit_pais'/>
+{% endblock %}
+{% block buttonname %}Editar Pais{% endblock %}

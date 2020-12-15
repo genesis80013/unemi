@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block contenidopanel %}
+    <div class="row-fluid">
+        <div class="span12">
+            <h3>{{ title }}</h3>
+            <h5>EXAMEN: {{ examen }}</h5>
+        </div>
+    </div>
+    <div class="row-fluid">
+        <div class="span12">
+            <a class="btn btn-success" href="/adm_configuracioncomplexivo?action=add_grupoexamen&id={{examen.id}}"><i class="fa fa-plus"></i> Agregar</a>
+            <a class="btn btn-info pull-right" href="/adm_configuracioncomplexivo?action=adm_cronogramaexamen"><i class="fa fa-arrow-circle-left"></i> Regresar</a>
+        </div>
+    </div>
+    <div class="row-fluid">
+        <div class="span12">
+            <table class="table table-bordered">
+                <thead>
+                    <th>Grupo</th>
+                    <th>Aula</th>
+                    <th>Fecha</th>
+                    <th>Inicio - Fin</th>
+                    <th>Minutos</th>
+                    <th>Cantidad de reactivos</th>
+                    <th>Nota mínima</th>
+                    <th>Nota máxima</th>
+                    <th>Tipo de examen</th>
+                    <th style="text-align: center;">Detalle de examen</th>
+                    <th style="text-align: center;">Delegados</th>
+                    <th style="text-align: center;">Estudiantes</th>
+                    <th style="text-align: center;">Ajustes</th>
+                </thead>
+                <tbody>
+                    {% for i in grupos %}
+                        <tr>
+                            <td>{{ i }}</td>
+                            <td>{{ i.aula }}</td>
+                            <td>{{ i.fecha|date:'d-m-Y' }}</td>
+                            <td>{{ i.inicio }} - {{ i.fin }}</td>
+                            <td>{{ i.minutos }}</td>
+                            <td>{{ i.cantidad }}</td>
+                            <td>{{ i.notamin }}</td>
+                            <td>{{ i.notamax }}</td>
+                            <td>{% if i.tipoexamen == 1 %}AVANZAR Y RETROCEDER{% elif i.tipoexamen == 2 %}AVANZAR{% else %}TIEMPO{% endif %}</td>
+                            <td style="text-align: center;">{% if i.activo %}Sí{% else %}No{% endif %}</td>
+                            <td style="text-align: center;">
+                                <a class="btn btn-mini btn-warning" href="/adm_configuracioncomplexivo?action=add_delegadoexamen&id={{ i.id }}" title="Delegados"><i class="fa fa-columns"></i></a>
+                            </td>
+                            <td style="text-align: center;">
+                                <a class="btn btn-mini btn-info ajaxshowdinamicbs" href="javascript:;"  nhref="/adm_configuracioncomplexivo?action=adm_grupoexamenconfiguracion&id={{ i.id }}" title="Ver"><i class="fa fa-eye"></i></a>
+
+                            </td>
+                            <td style="text-align: center;">
+                                <a class="btn btn-mini btn-info" href="/adm_configuracioncomplexivo?action=edit_grupoexamen&id={{ i.id }}" title="Editar"><i class="fa fa-edit"></i></a>
+                                <a class="btn btn-mini btn-danger eliminacionmodal" href="javascript:;" nhref="/adm_configuracioncomplexivo?action=del_grupoexamen&id={{ i.id }}" title="Eliminar"><i class="fa fa-close"></i></a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

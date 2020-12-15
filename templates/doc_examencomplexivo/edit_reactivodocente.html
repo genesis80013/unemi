@@ -1,0 +1,789 @@
+{% extends "ajaxformbase2.html" %}
+{% block extraheading %}
+    <style type="text/css">
+        tr.lista_reactivos td{
+            border: none;
+        }
+        tr.lista_reactivos:hover {
+            background-color: #B5FAAF;
+            border-style: outset;
+            border-width: 2px;
+        }
+        tr.lista_reactivos:hover a h5{
+            color: green;
+        }
+        tr.lista_reactivos:hover a{
+            color: white;
+            font-size: small;
+        }
+        .labeltable{
+            margin-left: 10px;
+            display: inline;
+        }
+        .checkboxtable {
+            margin: 0 0 0 !important;
+        }
+        .trtable{
+            border: hidden;
+        }
+    </style>
+    <script type="text/javascript">
+    $(function () {
+        var opcionmax={{ asignacion.formato.formatoreactivo.opcionesmax }};
+        var opcionmin={{ asignacion.formato.formatoreactivo.opcionesmin }};
+        var respmin={{ asignacion.formato.formatoreactivo.respuestasmin }};
+        var respmax={{ asignacion.formato.formatoreactivo.respuestasmax }};
+        var tipopregunta = "{{ reactivo.tipopregunta.abreviatura|lower }}";
+        lista_items1=[];
+        lista_items2=[];
+        lista_items3=[];
+
+        alertadetalle = function (t) {
+            smoke.alert("Mensaje: "+$(t).attr('mensaje'));
+        };
+        valiatributos = function(){
+            var ban = true;
+            for(i=0; i<lista_items1.length; i++){
+                if(lista_items1[i].texto == ""){
+                    ban = false;
+                    break;
+                }
+            }
+            return ban;
+        };
+        valivf = function(){
+            var ban = false;
+            var count = 0;
+            var porcentaje = 0;
+            for(i=0; i<lista_items2.length; i++){
+                if(lista_items2[i].vali == true){
+                    count = count + 1;
+                    porcentaje = porcentaje + lista_items2[i].valor;
+                }
+            }
+            if(count == 1 && porcentaje == 100){
+                ban = true;
+            }
+            return ban;
+        };
+        valiom = function(){
+                var ban = true;
+                for(i=0; i<lista_items2.length; i++){
+                    if(lista_items2[i].texto == "" && lista_items2[i].imagen == "" || (lista_items2[i].vali == true && lista_items2[i].valor == 0)){
+                        ban = false;
+                        break;
+                    }
+                }
+                if(ban){
+                    var count = 0;
+                    var count2 = 0;
+                    for(i=0; i<lista_items2.length; i++){
+                        if(lista_items2[i].vali == true){
+                            count = count + lista_items2[i].valor;
+                            count2++;
+                        }
+                    }
+                    if(count == 100 && count2 >= respmin && count2 <= respmax && lista_items2.length >= opcionmin && lista_items2.length <= opcionmax){
+                        ban = true;
+                    }else{
+                        ban = false;
+                    }
+                }
+                return ban;
+            };
+        valiem = function(){
+                var ban = true;
+                for(i=0; i<lista_items2.length; i++){
+                    if(lista_items2[i].textoa == "" || lista_items2[i].textob == "" || (lista_items2[i].vali == true && lista_items2[i].valor == 0)){
+                        ban = false;
+                        break;
+                    }
+                }
+                if(ban){
+                    var count = 0;
+                    var count2 = 0;
+                    for(i=0; i<lista_items2.length; i++){
+                        if(lista_items2[i].vali == true){
+                            count = count + lista_items2[i].valor;
+                            count2++;
+                        }
+                    }
+                    if(count == 100 && lista_items2.length >= opcionmin && lista_items2.length <= opcionmax){
+                        ban = true;
+                    }else{
+                        ban = false;
+                    }
+                }
+                console.log(lista_items2);
+                return ban;
+            };
+        valiopciones = function(){
+            var ban = true;
+            switch (tipopregunta) {
+                case "vf":
+                    ban = valivf();
+                    break;
+                case "om":
+                    ban = valiom();
+                    break;
+                case "em":
+                    ban = valiem();
+                    break;
+            }
+            return ban;
+        };
+        vali = function(){
+            if(valiatributos() == false) $('#validetalles').val('0');
+            else $('#validetalles').val('1');
+            if(valiopciones() == false) $('#valiopciones').val('0');
+            else $('#valiopciones').val('1');
+        };
+        var cargar = function () {
+            {% for lista in atributos %}
+                var item = {action:"none", idatributo:"{{ lista.id }}", texto:"{{ lista.texto }}", imagen:""};
+                if(lista_items1.length == 0) lista_items1 = [item];
+                else lista_items1.push(item);
+            {% endfor %}
+            {% for lista in listado %}
+                var item;
+                if(tipopregunta == "vf" || tipopregunta == "om"){
+                    item = {action:"none", id:"{{ forloop.counter }}", idopcion:"{{ lista.id }}", texto:"{{ lista.texto|upper }}", imagen:"", valor:{{ lista.valorporcentual|floatformat:"0" }}, vali:{% if lista.activo %}true{% else %}false{% endif %}};
+                }else if(tipopregunta == "em"){
+                    var text1 = "{{ lista.texto }}".split(';')[0];
+                    var text2 = "{{ lista.texto }}".split(';')[1];
+                    item = {action:"none", id:"{{ forloop.counter }}", idopcion:"{{ lista.id }}", texto:"{{ lista.texto|upper }}", textoa:text1, textob:text2, imagen:"", valor:{{ lista.valorporcentual|floatformat:"0" }}, vali:{% if lista.activo %}true{% else %}false{% endif %}};
+                }
+                if(lista_items2.length == 0){
+                    lista_items2=[item];
+                }else{
+                    lista_items2.push(item);
+                }
+            {% endfor %}
+            vali();
+        };
+        window.onloadend = cargar();
+        $('.detallereactivo').on('change', function () {
+            var idatributo = $(this).attr('idatributo');
+            var texto = $(this).val();
+            for(i=0; i<lista_items1.length; i++){
+                if(lista_items1[i].idatributo == idatributo){
+                    lista_items1[i].texto = texto;
+                    lista_items1[i].action = "edit";
+                }
+            }
+            vali();
+        });
+        $('.fileimg').on('change', function () {
+           var tipo = $(this).attr('tipo');
+           var name = $(this).attr('name');
+           var file = $(this).prop("files")[0];
+           if(file == undefined){
+               name = "";
+           }
+           if(tipo == "atributo"){
+               var idatributo = $(this).attr('idatributo');
+               for(i=0; i<lista_items1.length; i++){
+                   if(lista_items1[i].idatributo == idatributo){
+                       lista_items1[i].imagen = name;
+                       break;
+                   }
+               }
+           }
+           else if(tipo == "om"){
+                vali();
+           }
+        });
+        $('.checkboxtable').on('change', function () {
+           var id = $(this).attr('idtr');
+           var checked = $(this).attr('checked');
+           if(tipopregunta == "vf"){
+               if(checked == "checked"){
+                   if(id=="1"){
+                        lista_items2[id-1].action = "edit";
+                        lista_items2[id-1].vali = true;
+                        lista_items2[id-1].valor = 100;
+                        lista_items2[id].vali = false;
+                        lista_items2[id].valor = 0;
+                        $('#vp_vf1').val('100');
+                        $('#vp_vf2').val('');
+                        $('#checkbox_vf2').removeAttr('checked');
+                   }else{
+                        lista_items2[id-1].action = "edit";
+                        lista_items2[id-1].vali = true;
+                        lista_items2[id-1].valor = 100;
+                        lista_items2[id-2].vali = false;
+                        lista_items2[id-2].valor = 0;
+                        $('#vp_vf'+id).val('100');
+                        $('#vp_vf'+(id-1)).val('');
+                        $('#checkbox_vf'+(id-1)).removeAttr('checked');
+                   }
+                }else{
+                    if(lista_items2[id-1].action == "none"){
+                        lista_items2[id-1].action = "edit";
+                    }
+                    lista_items2[id-1].vali = false;
+                    lista_items2[id-1].valor = 0;
+                    $('#vp_vf'+id).val('');
+                }
+                vali();
+
+           }
+        });
+        checkom = function(value, id){
+            for(i=0; i<lista_items2.length; i++){
+                if(lista_items2[i].imagen != "" || lista_items2[i].texto!= ""){
+                    if(lista_items2[i].id==id){
+                        lista_items2[i].vali = value;
+                        lista_items2[i].action = "edit";
+                        if(value == false){
+                            lista_items2[i].valor = 0;
+                            $('#vp_om'+id).val('');
+                            $('#vp_om'+id).attr('disabled', 'disabled');
+                        }
+                        else{
+                            $('#vp_om'+id).removeAttr('disabled');
+                        }
+                    }
+                }
+            }
+        };
+        checkem = function(value, id){
+            for(i=0; i<lista_items2.length; i++){
+                if(lista_items2[i].id == id){
+                    lista_items2[i].vali = value;
+                    lista_items2[i].action = "edit";
+                    if(value == false){
+                        lista_items2[i].valor = 0;
+                        $('#vp_em'+id).val('');
+                        $('#vp_em'+id).attr('disabled', 'disabled');
+                    }else{
+                        $('#vp_em'+id).removeAttr('disabled');
+                    }
+                }
+            }
+        };
+        $('.checkbox_om').on('change', function () {
+            if(tipopregunta == "om"){
+                var checked = $(this).attr('checked');
+                var id = $(this).attr('idtr');
+                if(checked == 'checked') checked = true;
+                else checked = false;
+                var files = $('#file_om'+id).prop("files")[0];
+                if($('#input_om'+id).val()!= "" || files != undefined){
+                    checkom(checked, id);
+                }else{
+                    $(this).removeAttr('checked');
+                }
+            }
+            vali();
+        });
+        $('.checkbox_em').on('change', function () {
+            var checked = $(this).attr('checked');
+            var id = $(this).attr('idtr');
+            if(checked == 'checked') checked = true;
+            else checked = false;
+            if($('#input_ema'+id).val()!= "" || $('#input_emb'+id).val()!= ""){
+                checkem(checked, id);
+            }else{
+                $(this).removeAttr('checked');
+            }
+            vali();
+        });
+        $('.valorem').on('change', function () {
+            if(tipopregunta == "em"){
+                var id = $(this).attr('idtr');
+                var texto1 = $('#input_ema'+id).val();
+                var texto2 = $('#input_emb'+id).val();
+                var valor = $(this).val();
+                if(texto1 != "" && texto2 != ""){
+                    for(i=0; i<lista_items2.length; i++){
+                        if(lista_items2[i].id == id && (lista_items2[i].textoa != "" || lista_items2[i].textob != "") && lista_items2[i].vali == true){
+                            lista_items2[i].valor = parseInt(valor);
+                            if(lista_items2[i].action != "add") lista_items2[i].action = "edit";
+                        }
+                    }
+
+                }else{
+                    $(this).val('');
+                }
+                vali();
+            }
+        });
+        $('.valorp').on('change', function () {
+            if(tipopregunta == "om"){
+                var id = $(this).attr('idtr');
+                var valor = $(this).val();
+                for(i=0; i<lista_items2.length; i++){
+                    if(lista_items2[i].id == id && (lista_items2[i].texto != "" || lista_items2[i].imagen != "") && lista_items2[i].vali == true){
+                        lista_items2[i].valor = parseInt(valor);
+                        lista_items2[i].action = "edit";
+                    }
+                }
+            }
+            vali();
+        });
+        $('.add_fila').click(function () {
+            var tipo = $(this).attr('tipo');
+            var count = 0;
+            var index = 0;
+            if(tipo == "om"){
+                $('#tbodyopcionmultiple tr').each(function () {
+                   var vali = $(this).attr('vali');
+                   var idtr = $(this).attr('idtr');
+                   index++;
+                   if(vali != "si" && count != 1){
+                       $(this).removeAttr('style');
+                       $(this).attr('vali','si');
+                       $('#label_om'+idtr).text(index);
+                       count=1;
+                   }
+                });
+            }else{
+                $('#tbodyemparejamiento tr').each(function () {
+                   var vali = $(this).attr('vali');
+                   var idtr = $(this).attr('idtr');
+                   index++;
+                   if(vali != "si" && count != 1){
+                       $(this).removeAttr('style');
+                       $(this).attr('vali','si');
+                       $('#label_em'+idtr).text(index);
+                       count=1;
+                   }
+                });
+            }
+        });
+        resetinput = function(input){
+            $('#'+input).val('');
+            //recorrer label para desactivar el span de seleccionado
+            var label = "";
+            $('.badge').each(function () {
+                var padre = $(this).parent();
+                var id = $(padre).attr('for');
+                if(id==input){
+                    label = $(this);
+                }
+            });
+            $(label).remove();
+        };
+        eliminar = function (t) {
+            var tipo = $(t).attr('tipo');
+            var id = $(t).attr('idtr');
+            if(tipo == "em"){
+                $('#trem_'+id).prop('style', 'display:none');
+                $('#trem_'+id).attr('vali', 'no');
+                for(i=0; i<lista_items2.length; i++){
+                    if(lista_items2[i].id == id && lista_items2[i].action == "add"){
+                        lista_items2.splice(i,1);
+                    }else if(lista_items2[i].id == id && lista_items2[i].action != "add"){
+                        lista_items2[i].action = "del";
+                        if(lista_items3.length == 0) lista_items3 = [lista_items2[i]];
+                        else lista_items3.push(lista_items2[i]);
+                        lista_items2.splice(i,1);
+                    }
+                }
+                //borrar datos
+                $('#checkbox_em'+id).removeAttr('checked');
+                $('#input_ema'+id).val('');
+                $('#input_emb'+id).val('');
+                $('#vp_em'+id).val('');
+                $('#vp_em'+id).attr('disabled', 'disabled');
+                //cambiar fila
+                var row = $('#trem_'+id);
+                var index = 0;
+                $('#tbodyemparejamiento tr').each(function () {
+                    var actual = $(this);
+                    index++;
+                    if(index == opcionmax && ($(row).attr('idtr') != $(actual).attr('idtr'))){
+                        row.insertAfter(actual);
+                    }
+                });
+                //actualizar numeros
+                var count = 1;
+                $('#tbodyemparejamiento tr').each(function () {
+                    var vali= $(this).attr('vali');
+                    var idtr = $(this).attr('idtr');
+                    if(vali == "si"){
+                        $('#label_em'+idtr).text(count);
+                        count++;
+                    }
+                });
+            }else if(tipo == "om"){
+                $('#trom_'+id).prop('style', 'display:none');
+                $('#trom_'+id).attr('vali', 'no');
+                for(i=0; i<lista_items2.length; i++){
+                    if(lista_items2[i].id == id && lista_items2[i].action == "add"){
+                        lista_items2.splice(i,1);
+                    }else if(lista_items2[i].id == id && lista_items2[i].action != "add"){
+                        lista_items2[i].action = "del";
+                        if(lista_items3.length == 0) lista_items3 = [lista_items2[i]];
+                        else lista_items3.push(lista_items2[i]);
+                        lista_items2.splice(i,1);
+                    }
+                }
+                //borrar datos
+                $('#checkbox_om'+id).removeAttr('checked');
+                $('#vp_om'+id).val('');
+                $('#vp_om'+id).attr('disabled','disabled');
+                $('#input_om'+id).val('');
+                resetinput('file_om'+id);
+                //cambiar fila
+                var row = $('#trom_'+id);
+                var index = 0;
+                $('#tbodyopcionmultiple tr').each(function () {
+                    var actual = $(this);
+                    index++;
+                    if(index == opcionmax && ($(row).attr('idtr') != $(actual).attr('idtr'))){
+                        row.insertAfter(actual);
+                    }
+                });
+                //actualizar numeros
+                var count = 1;
+                $('#tbodyopcionmultiple tr').each(function () {
+                    var vali= $(this).attr('vali');
+                    var idtr = $(this).attr('idtr');
+                    if(vali == "si"){
+                        $('#label_om'+idtr).text(count);
+                        count++;
+                    }
+                });
+            }
+            vali();
+            console.log('Datos');
+            console.log(lista_items2);
+            console.log('Datos eliminados');
+            console.log(lista_items3);
+        };
+        valiaddem = function(id){
+            var ban = true; //no existe
+            if(tipopregunta == "em"){
+                for(i=0; i<lista_items2.length; i++){
+                    if(lista_items2[i].id == id){
+                        ban = false; //existe
+                        break;
+                    }
+                }
+            }
+            return ban;
+        };
+        $('.opciontextoa').on('change', function () {
+            if(tipopregunta == "em"){
+                var id=$(this).attr('idtr');
+                var texto = $(this).val();
+                var item = {action:'add', id:id, idopcion:"",  textoa:texto, textob:'', texto:'', imagen:'', valor:0, vali:true};
+                if(lista_items2.length == 0){
+                    lista_items2 = [item];
+                }else{
+                    if(valiaddem(id)){
+                        lista_items2.push(item);
+                    }else{
+                        for(i=0; i<lista_items2.length; i++){
+                            if(lista_items2[i].id==id && lista_items2[i].action != "del"){
+                                lista_items2[i].textoa = texto;
+                                lista_items2[i].texto = lista_items2[i].textoa + ";" +lista_items2[i].textob;
+                                if(lista_items2[i].action != "add")
+                                    lista_items2[i].action = "edit";
+                            }
+                        }
+                    }
+                }
+            }
+            vali();
+            console.log(lista_items2);
+        });
+        $('.opciontextob').on('change', function () {
+            if(tipopregunta == "em"){
+                var id=$(this).attr('idtr');
+                var texto = $(this).val();
+                var item = {action:'add', id:id, idopcion:"", textoa:'', textob:texto, texto:'', imagen:'', valor:0, vali:true};
+                if(lista_items2.length == 0){
+                    lista_items2 = [item];
+                }else{
+                    if(valiaddem(id)){
+                        lista_items2.push(item);
+                    }else{
+                        for(i=0; i<lista_items2.length; i++){
+                            if(lista_items2[i].id==id && lista_items2[i].action != "del"){
+                                lista_items2[i].textob = texto;
+                                lista_items2[i].texto = lista_items2[i].textoa + ";" +lista_items2[i].textob;
+                                if(lista_items2[i].action != "add")
+                                    lista_items2[i].action = "edit";
+                            }
+                        }
+                    }
+                }
+           }
+            vali();
+            console.log(lista_items2);
+        });
+        valiaddom = function(id){
+            var ban = true; //no existe
+            if(tipopregunta == "om"){
+                for(i=0; i<lista_items2.length; i++){
+                    if(lista_items2[i].id == id){
+                        ban = false; //existe
+                        break;
+                    }
+                }
+            }
+            return ban;
+        };
+        $('.opciontexto').on('change', function () {
+            if(tipopregunta == "om"){
+                var id=$(this).attr('idtr');
+                var texto = $(this).val();
+                var item = {action:'add', id:id, idopcion:"", texto:texto, imagen:'', valor:0, vali:false};
+                if(lista_items2.length == 0){
+                        lista_items2 = [item]
+                }else{
+                    if(valiaddom(id)){
+                        lista_items2.push(item);
+                    }else{
+                        for(i=0; i<lista_items2.length; i++){
+                            if(lista_items2[i].id==id){
+                                lista_items2[i].texto = texto;
+                                lista_items2[i].action = "edit";
+                            }
+                        }
+                    }
+                }
+            }
+            vali();
+            console.log(lista_items2);
+        });
+    });
+    </script>
+{% endblock %}
+{% block titulo %}
+    <h5>{{ title }}</h5>
+    {% if asignacion.formato.formatoreactivo.tiporeactivo.nombre == "GENERAL" %}
+        <h5>ÁREA: {{ asignacion.area.nombre }}</h5>
+    {% else %}
+        <h5>ASIGNATURA: {{ asignacion.asignatura.asignatura.nombre }}</h5>
+    {% endif %}
+{% endblock %}
+{% block formaction %}/doc_configuracioncomplexivo{% endblock %}
+{% block formdestination %}/doc_configuracioncomplexivo?action=add_reactivodocente&id={{asignacion.id}}{% endblock %}
+{% block formextra %}
+    {% if reactivo.estadofinal == False %}
+        <div class="row-fluid" style="padding-bottom: 0px;">
+            <div class="alert alert-error alert-dismissable">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <strong>¡Alerta!</strong> {{reactivo.observacion}}
+            </div>
+        </div>
+    {% endif %}
+    <div class="row-fluid">
+        <table width="100%" class="table table-bordered">
+            <thead>
+                <tr>
+                    <th style="text-align: center; padding-bottom: 20px;"><h5 style="padding-top: 10px; padding-right: 12px;">Reactivos agregados ({{ reactivos|length }} de {{asignacion.cantidad}}) <a class="btn btn-mini btn-success pull-right" title="Agregar" href="/doc_configuracioncomplexivo?action=add_reactivodocente&id={{ asignacion.id }}"><i class="fa fa-plus"></i></a></h5></th>
+                    <th style="text-align: center; padding-bottom: 20px;"><h5 style="padding-top: 10px">Reactivo - Calificación máxima ({{ asignacion.formato.formatoreactivo.notamax }}) puntos</h5></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="width: 25%; text-align: center">
+                        <div id="reactivosadd" class="tree well" style="overflow-y: auto;height: 500px; padding-top: 5px; padding-left: 5px; padding-right: 5px; padding-bottom: 5px;">
+                            <table class="table table-hover">
+                                <tbody style="text-align: center; border: transparent;">
+                                    {% for r in reactivos %}
+                                        <tr style="text-align: center; width: 100%; {% if r.id == reactivo.id %}background-color: #B5FAAF;{% endif %}" class="btn btn-lg btn-block lista_reactivos ">
+                                            <td style="border-right: hidden;padding-left: 10px">
+                                                <h5 >Reactivo {{ forloop.counter }} </h5>
+                                                {% if r.estadofinal == False %}<span class="label label-danger">Estado: Corregir</span>{% endif %}
+                                            </td>
+                                            <td style="width: 15%; text-align: center">
+                                                <a title="Editar" href="/doc_configuracioncomplexivo?action=edit_reactivodocente&id={{ r.id }}" class="btn btn-mini btn-warning"> <i class="fa fa-edit"></i></a>
+                                                <a title="Eliminar" href="javascript:;" nhref="/doc_configuracioncomplexivo?action=del_reactivodocente&id={{ reactivo.id }}" class="btn btn-mini btn-danger eliminacionmodal"> <i class="fa fa-remove"></i></a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="well" style="padding-bottom: 0px;">
+                            <div class="row-fluid">
+                                <div class="span12">
+                                    {% for atributo in atributos %}
+                                        <div class="control-group cont-100" style="padding: 1%; min-height:45px; float: left;">
+                                            <div class="control-label" style="width: 120px; text-align: right; line-height: 20px; padding-right: 10px;padding-top: 20px; float: left; text-transform: capitalize">
+                                                <h5>{{ atributo.atributo.nombre.lower }} <button class="btn btn-mini btn-warning" onclick="alertadetalle(this)" mensaje="{{ atributo.atributo.detalle }}"><i class="fa fa-info"></i></button></h5>
+                                            </div>
+                                            <div class="controls cont-div-100">
+                                                <table style="width: 100%; background-color: transparent; border: hidden;">
+                                                    <tr>
+                                                        <td style="border: hidden; width: 75%">
+                                                            <textarea style="text-transform: none;" class="validate[required] detallereactivo" rows="3" formwidth="100" tipo="atr" idatributo="{{ atributo.id }}" opr="" valp="">{{ atributo.texto }} </textarea>
+                                                        </td>
+                                                        {% if atributo.archivo %}
+                                                            <td style="padding-top: 20px; text-align: left; border: hidden"><a href="{{ atributo.archivo.url }}" target="_blank" class="btn btn-warning btn-mini"><i class="fa fa-image"></i></a></td>
+                                                        {% endif %}
+                                                        <td style="padding-top: 20px; text-align: left">
+                                                            <input type="file" name="image_{{ atributo.id}}" id="image_{{ atributo.id }}" formwidth="20" accept="image/*" idatributo="{{ atributo.id }}" tipo="atributo" opr="" valp="" class="fileimg">
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                    <div class="control-group cont-50" style="padding: 1%; min-height:45px; float: left;">
+                                        <div class="control-label" style="width: 200px; text-align: right; line-height: 20px; padding-right: 10px;padding-top: 5px; float: left; text-transform: capitalize">
+                                            <h5>Tipo de pregunta:</h5>
+                                        </div>
+                                        <div class="controls cont-div-50">
+                                            <select class="mdb-select validate[required]" name="tipopregunta" id="selecttipo" formwidth="100" disabled>
+                                                <option value="{{ reactivo.tipopregunta.abreviatura }}" selected>{{ reactivo.tipopregunta }}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="control-group cont-50" style="padding: 1%; min-height:45px; float: left;">
+                                        <div class="control-label" style="width: 200px; text-align: right; line-height: 20px; padding-right: 10px;padding-top: 5px; float: left; text-transform: capitalize">
+                                            <h5>Calificación:</h5>
+                                        </div>
+                                        <div class="controls cont-div-50">
+                                            <input type="number" id="calif" min="{{ asignacion.formato.formatoreactivo.notamin|floatformat:"0" }}" max="{{ asignacion.formato.formatoreactivo.notamax|floatformat:"0" }}" value="{{ reactivo.nota|floatformat:"0" }}" name="nota" class="validate[required,custom[onlyNumberSp],min[{{ asignacion.formato.formatoreactivo.notamin|floatformat:"0" }}],max[{{ asignacion.formato.formatoreactivo.notamax|floatformat:"0" }}]]">
+                                        </div>
+                                    </div>
+                                    <div class="control-group cont-50" style="padding: 1%; min-height:45px; float: left;">
+                                        <div class="control-label" style="width: 200px; text-align: right; line-height: 20px; padding-right: 10px;padding-top: 5px; float: left; text-transform: capitalize">
+                                            <h5>Opción aleatoria:</h5>
+                                        </div>
+                                        <div class="controls cont-div-50">
+                                            <input type="checkbox" id="aleat" name="aleatorio" {% if reactivo.aleatorio %} checked {% endif %}>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% if reactivo.tipopregunta.abreviatura == "vf" %}
+                            <div class="row-fluid" id="tbverdaderofalso">
+                                <div class="tree well" style="border-style: hidden; box-shadow: none; padding-bottom: 0px;" formwidth="100">
+                                    <table class="table table-striped table-bordered " id="btvf" cellspacing="0" cellpadding="0">
+                                        <thead>
+                                            <tr><th style="text-align: center;" colspan="12"><h5>Opciones</h5></th></tr>
+                                            <tr>
+                                                <th style="text-align: center; width: 4%;"><h5>Opción</h5></th>
+                                                <th style="text-align: center; width: 10%;"><h5>Valor (%)</h5></th>
+                                                <th style="text-align: center;"><h5>Texto</h5></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbodyverdadero">
+                                        {% for opcion in opciones %}
+                                            <tr style="border: hidden;">
+                                               <td style="border-right-style: hidden;">
+                                                   <label for="checkbox_vf{{forloop.counter}}" class="labeltable">{{forloop.counter}} </label> <input id="checkbox_vf{{forloop.counter}}" class="checkbox_{{opcion.reactivo.tipopregunta.abreviatura|lower}} checkboxtable"  texto="{{ opcion.texto }}" idtr="{{ forloop.counter }}" type="checkbox" {% if opcion.activo %}checked{% endif %}>
+                                               </td>
+                                                <td style="border-left-style: hidden;">
+                                                    <input type="number" id="vp_vf{{forloop.counter}}" min="1" max="100" class="validate[min[1],max[100],custom[onlyNumberSp]] valorvf" valor="{{opcion.texto|lower}}" disabled {% if opcion.activo %}value="{{ opcion.valorporcentual|floatformat:0 }}"{% endif %}>
+                                                </td>
+                                                <td style="border-left-style: hidden;">
+                                                    <input type="text" formwidth="100" texto="{{opcion.texto|upper}}" value="{{opcion.texto|upper}}" disabled/>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        {% elif  reactivo.tipopregunta.abreviatura == "om" %}
+                            <div class="row-fluid" id="tbopcionmultiple">
+                                <div class="tree well" style="border-style: hidden; box-shadow: none;padding-bottom: 0px;" formwidth="100">
+                                    <table class="table table-striped table-bordered " id="btvf" cellspacing="0" cellpadding="0">
+                                        <thead>
+                                            <tr><th style="text-align: center;" colspan="12"><h5>Opciones <button class="btn btn-mini btn-success pull-right add_fila" tipo="om"><i class="fa fa-plus"></i> Agregar</button></h5></th></tr>
+                                            <tr>
+                                                <th style="text-align: center; width: 4%;"><h5>Opción</h5></th>
+                                                <th style="text-align: center; width: 10%;"><h5>Valor (%)</h5></th>
+                                                <th style="text-align: center; width: 56%;"><h5>Texto</h5></th>
+                                                <th style="text-align: center; width: 20%;"><h5>Imagen</h5></th>
+                                                <th style="text-align: center; width: 10%;"><h5>Ajuste</h5></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbodyopcionmultiple">
+                                        {% for opcion in opciones %}
+                                            <tr class="trtable trom" idtr="{{ forloop.counter }}" style="{% if forloop.counter > asignacion.formato.formatoreactivo.opcionesmin and opcion.opcion == None %}display:none;{% endif %}"
+                                                id="trom_{{ forloop.counter }}" vali="{% if opcion.opcion != None %}si{% else %}no{% endif %}" obligatorio="{% if forloop.counter <= asignacion.formato.formatoreactivo.opcionesmin %}si{% else %}no{% endif %}">
+                                                <td>
+                                                    <label for="checkbox_om{{ forloop.counter  }}" class="labeltable" id="label_om{{ forloop.counter }}">{{ forloop.counter  }} </label> <input id="checkbox_om{{ forloop.counter  }}" class="checkboxtable checkbox_om"  tipo="om" valor="r" type="checkbox" idtr="{{ forloop.counter }}" {% if opcion.opcion != None and opcion.opcion.activo %}checked{% endif %}>
+                                                </td>
+                                                <td style="border-left-style: hidden; border-right-style: hidden;">
+                                                    <input type="number" idtr="{{ forloop.counter }}" id="vp_om{{ forloop.counter }}" min="1" max="100" class="validate[min[1],max[100],custom[onlyNumberSp]] valorp" tipo="om" valor="" {% if opcion.opcion != None and opcion.opcion.activo == True %} value="{{ opcion.opcion.valorporcentual|floatformat:0 }}" {% else %} disabled {% endif %}>
+                                                </td>
+                                                <td style="border-left-style: hidden; border-right-style: hidden;">
+                                                    <input type="text" style="text-transform: none;" formwidth="100" id="input_om{{ forloop.counter }}" texto="" class="opciontexto" idtr="{{ forloop.counter }}" {% if opcion.opcion != None %}value="{{ opcion.opcion.texto }}"{% endif %}/>
+                                                </td>
+                                                <td style="border-left-style: hidden; border-right-style: hidden; text-align: center">
+                                                    <input type="file" idtr="{{ forloop.counter }}" tipo="om" id="file_om{{ forloop.counter }}" name="file_om{{ forloop.counter }}" accept="image/*" tipo="om" class="fileimg" valor="" tabindex="-1" style="position: absolute; clip: rect(0px, 0px, 0px, 0px);">
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    {% if opcion.opcion != None and opcion.opcion.archivo %}
+                                                        <a href="{{ opcion.opcion.archivo.url }}" target="_blank" class="btn btn-warning btn-mini"><i class="fa fa-image"></i></a>
+                                                {% endif %}
+                                                    {% if forloop.counter > asignacion.formato.formatoreactivo.opcionesmin %}
+
+                                                        <button class="btn btn-mini btn-danger" idtr="{{ forloop.counter }}" onclick="eliminar(this)" tipo="om"><i class="fa fa-remove"></i></button>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        {% elif  reactivo.tipopregunta.abreviatura == "em" %}
+                            <div class="row-fluid" id="tbemparejamiento">
+                                <div class="tree well" style="border-style: hidden; box-shadow: none; padding-bottom: 0px;" formwidth="100">
+                                    <table class="table table-striped table-bordered " cellspacing="0" cellpadding="0">
+                                        <thead>
+                                            <tr><th style="text-align: center;" colspan="12"><h5>Opciones <button class="btn btn-mini btn-success pull-right add_fila" tipo="em"><i class="fa fa-plus"></i> Agregar</button></h5></th></tr>
+                                            <tr>
+                                                <th style="text-align: center; width: 6%;"><h5>Opción</h5></th>
+                                                <th style="text-align: center; width: 10%;"><h5>Valor (%)</h5></th>
+                                                <th style="text-align: center; width: 37%;"><h5>Texto A</h5></th>
+                                                <th style="text-align: center; width: 37%;"><h5>Texto B</h5></th>
+                                                <th style="text-align: center; width: 10%;"><h5>Ajuste</h5></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbodyemparejamiento">
+                                        {% for opcion in opciones %}
+                                            <tr class="trtable trem" idtr="{{ forloop.counter }}" style="{% if forloop.counter > asignacion.formato.formatoreactivo.opcionesmin and opcion.opcion == None %}display:none;{% endif %}"
+                                                id="trem_{{ forloop.counter }}" vali="{% if opcion.opcion != None %}si{% else %}no{% endif %}" obligatorio="{% if forloop.counter <= asignacion.formato.formatoreactivo.opcionesmin %}si{% else %}no{% endif %}">
+                                                <td style="text-align: center">
+                                                    <label class="labeltable" id="label_em{{ forloop.counter }}">{{ forloop.counter  }} </label>
+                                                </td>
+                                                <td style="border-left-style: hidden; border-right-style: hidden;">
+                                                    <input type="number" idtr="{{ forloop.counter }}" id="vp_em{{ forloop.counter }}" min="1" max="100" class="validate[min[1],max[100],custom[onlyNumberSp]] valorem" tipo="em" valor="" {% if opcion.opcion != None and opcion.opcion.activo == True %} value="{{ opcion.opcion.valorporcentual|floatformat:0 }}" {% endif %}>
+                                                </td>
+                                                <td style="border-left-style: hidden; border-right-style: hidden;">
+                                                    <input type="text" style="text-transform: none;" formwidth="100" id="input_ema{{ forloop.counter }}" texto="" class="opciontextoa" idtr="{{ forloop.counter }}" {% if opcion.opcion != None %} value="{{ opcion.textoa }}" {% endif %}/>
+                                                </td>
+                                                <td style="border-left-style: hidden; border-right-style: hidden;">
+                                                    <input type="text" style="text-transform: none;" formwidth="100" id="input_emb{{ forloop.counter }}" texto="" class="opciontextob" idtr="{{ forloop.counter }}" {% if opcion.opcion != None %} value="{{ opcion.textob }}" {% endif %}/>
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    {% if forloop.counter > asignacion.formato.formatoreactivo.opcionesmin %}
+                                                        <button class="btn btn-mini btn-danger" idtr="{{ forloop.counter }}" onclick="eliminar(this)" tipo="em" idfila="{{ forloop.counter }}"><i class="fa fa-remove"></i> Eliminar</button>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        {% endif %}
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <input type='hidden' name='action' value='edit_reactivodocente'/>
+    <input type='hidden' name='id' value='{{ reactivo.id }}'/>
+    <input type='hidden' name='valiopciones' id="valiopciones" value='0'/>
+    <input type='hidden' name='validetalles' id="validetalles" value='0'/>
+{% endblock %}
+{% block formback %}/doc_configuracioncomplexivo?action=adm_reactivo{% endblock %}
+{% block buttonname %}Guardar{% endblock %}
+{% block cancelname %} Salir {% endblock %}

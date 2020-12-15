@@ -1,0 +1,135 @@
+{% extends 'ajaxformbase.html' %}
+{% block extraheading %}
+<script type="text/javascript">
+    $(function () {
+        //esconder botones de ajax
+        $('#formbutton').addClass('hidden');
+        $('.bloqueo_pantalla').addClass('hidden');
+        //otros
+        $('.activaselect').select2();
+        $("#formsimul").validationEngine({autoHidePrompt:true, autoHideDelay:1000 });
+        $('#id_bateria').change(function () {
+            var id = $(this).val();
+            //borrar datos anteriores
+            $('#id_area').val('');
+            $('#id_area').html('<option value>------------------------</option>');
+            $('#select2-id_area-container').text('------------------------');
+            $('#select2-id_area-container').attr('title','------------------------');
+            if(id!=""){
+                $.ajax({
+                    type: "POST",
+                    url: "/est_configuracioncomplexivo",
+                    data: {'action': 'listar_seccionbateria','idbateriacarrera': id},
+                    success: function(data) {
+                        if (data.result == 'ok') {
+                            console.log(data.mensaje);
+                            for(detalle in data.mensaje){
+                                $('#id_area').append('<option value="'+data.mensaje[detalle]['id']+';'+data.mensaje[detalle]['tipo']+'">'+data.mensaje[detalle]['nombre']+'</option>')
+                            }
+                        } else {
+                            smoke.alert(data.mensaje);
+                        }
+                    },
+                    error: function() {
+                        $.unblockUI();
+                        smoke.alert(data.mensaje);
+                    },
+                    dataType: "json"
+                });
+            }
+        });
+        $('#identrar').click(function () {
+            var valid = $("#formsimul").validationEngine('validate');
+            if(valid){
+                //bloqueointerface();
+                var bateria = $('#id_bateria').val();
+                var area = $('#id_area').val();
+                var cantidad = $('#id_cantidad').val();
+                $.ajax({
+                    type: "POST",
+                    url: "/est_configuracioncomplexivo",
+                    data: {"action":"add_simulacionexamen","bateria":bateria,"area":area,"cantidad":cantidad,"matricula":{{matricula.id}}},
+                    success: function(data) {
+                        if (data.result == 'ok') {
+                            simulacion = data.mensaje;
+                            index = data.mensaje2;
+                            location.href = "/est_configuracioncomplexivo?action=edit_simulacionexamen&id="+simulacion+"&index="+index;
+                        } else {
+                            smoke.alert(data.mensaje);
+                        }
+                    },
+                    error: function() {
+                        $.unblockUI();
+                        smoke.alert(data.mensaje);
+                    },
+                    dataType: "json"
+                });
+            }else{
+                setTimeout(function() {
+                    $('.help-text').each(function () {
+                        var field = $(this);
+                        if (field.attr('alert')) {
+                            field.html(field.attr('alert'));
+                        } else {
+                            field.html('');
+                        }
+                    });
+                }, 8000);
+                $.unblockUI();
+            }
+
+        });
+    });
+</script>
+{% endblock %}
+{% block titulo %}{{ title }}{% endblock %}
+{% block formwidth %}form-l{% endblock %}
+{% block formadicional %}
+    <form id="formsimul">
+    <div class="row-fluid">
+        <div id="" class="control-group cont-100" style="padding: 1%; min-height:45px; float: left; ">
+            <div class="control-label" style="line-height: 20px; text-align: right; padding-right: 10px; float: left; width: 150px;">
+                Bateria
+            </div>
+            <div class="controls cont-div-100">
+                <select formwidth="100" id="id_bateria" class="activaselect validate[required]" name="bateria" style="width: 100%">
+                    <option value>-----------------------</option>
+                    {% for b in baterias %}
+                        <option value="{{ b.id }}">BATERIA DE {{ b.carrera.carrera }} EN {{ b.bateria.periodo }}</option>
+                    {% endfor %}
+                </select>
+                <p class="help-text" style="font-size: 10px; margin: 0; padding: 0; line-height: 1.1;" alert=""></p>
+            </div>
+        </div>
+        <div id="" class="control-group cont-100" style="padding: 1%; min-height:45px; float: left; ">
+            <div class="control-label" style="line-height: 20px; text-align: right; padding-right: 10px; float: left; width: 150px;">
+                Área
+            </div>
+            <div class="controls cont-div-100">
+                <select formwidth="100" id="id_area" class="activaselect" name="area" style="width: 100%">
+                    <option value>-----------------------</option>
+                </select>
+                <p class="help-text" style="font-size: 10px; margin: 0; padding: 0; line-height: 1.1;" alert=""></p>
+            </div>
+        </div>
+        <div id="" class="control-group cont-100" style="padding: 1%; min-height:45px; float: left; ">
+            <div class="control-label" style="line-height: 20px; text-align: right; padding-right: 10px; float: left; width: 150px;">
+                Cantidad
+            </div>
+            <div class="controls cont-div-100">
+                <input type="number" formwidth="100" id="id_cantidad" class="validate[required,custom[onlyNumberSp],min[1]]" name="cantidad" style="width: 100%">
+                <p class="help-text" style="font-size: 10px; margin: 0; padding: 0; line-height: 1.1;" alert=""></p>
+            </div>
+        </div>
+    </div>
+    <div class="row-fluid">
+        <div style="text-align: right;">
+            <a class="btn btn-success btn-form" id="identrar">Guardar</a>
+            <a class="btn btn-danger btn-form" id="idcancelar" href="/est_configuracioncomplexivo?action=adm_simulexamencomplexivo">Cancelar</a>
+        </div>
+    </div>
+    </form>
+{% endblock %}
+{% block formextra %}
+    <input type='hidden' name='action' value='add_areareactivo'/>
+{% endblock %}

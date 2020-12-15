@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block heading %}
+<script type="text/javascript">
+    $(function() {
+        $("#id_username").css({'text-transform': 'none'});
+        $(".enviarlogin").click(function () {
+            var usuario = $("#id_username").val();
+            var clave = $("#id_password").val();
+            $.ajax({
+                type: "POST",
+                url: "/",
+                data: {'action': 'login', 'user': usuario, 'pass': clave },
+                success: function(data) {
+                    if (data.result == 'ok') {
+                        location.href = "/";
+                    } else {
+                        alert(data.mensaje);
+                    }
+                },
+                error: function() {
+                    alert('Error al enviar los datos');
+                },
+                dataType: "json"
+            });
+        })
+    });
+</script>
+{% endblock %}
+{% block contenido %}
+<table align="center">
+    <tr>
+        <td>
+            <div class="container span4 well">
+                <div class="login">
+                    <h4>Inicio de Session</h4>
+                    <hr>
+                    <form class="login-inner">
+                        <input type="text" class="form-control username" id="id_username" placeholder="Ingrese usuario">
+                        <p>
+                            <input type="password" class="form-control password" id="id_password" placeholder="Clave">
+                        <p><p>
+                        <input class="btn btn-block btn-lg btn-success submit enviarlogin" type="button" value="Login">
+                    </form>
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block contenidopanel %}
+    <div class="row-fluid">
+        <div class="span12">
+            <a class="btn btn-mini btn-info pull-right" href="/adm_configuracioncomplexivo?action=adm_bateriaexamen">Volver</a>
+            <h5>CRONOGRAMA: {{ bateria.bateria.cronograma }}</h5>
+            <h5>CARRERA: {{ bateria.carrera.carrera }}</h5>
+            <h5>{{ title }}</h5>
+        </div>
+    </div>
+    <div class="row-fluid">
+        <div class="span12">
+            <table class="table table-bordered">
+               <thead>
+                <th>Área</th>
+                <th style="text-align: center">Cantidad</th>
+                <th style="text-align: center"></th>
+               </thead>
+                <tbody id="tbody">
+                {% for i in reactivos %}
+                    <tr>
+                        <td>
+                            {{ i.area }}
+                        </td>
+                        <td style="text-align: center">
+                            {{ i.reactivos }}
+                        </td>
+                        <td style="text-align: center;">
+                            <a class="btn btn-mini btn-info" href="/adm_configuracioncomplexivo?action=ver_detallebateriageneral&id={{ bateria.id }}&idarea={{ i.id }}"><i class="fa fa-eye"></i></a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

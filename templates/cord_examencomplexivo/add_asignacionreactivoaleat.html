@@ -1,0 +1,38 @@
+{% extends "ajaxformbase.html" %}
+{% block extraheading %}
+    <script type="text/javascript">
+        $(function() {
+            $(".activaselect").select2();
+            var cargar = function () {
+                $('.mallaid').html('<option value="" selected="selected">---------</option>');
+                {% if mallas|length != 0 %}
+                    {% for m in mallas %}
+                        var vigente = "";
+                        {% if m.malla.vigente %}
+                            vigente = "VIGENTE";
+                        {% else %}
+                            vigente = "NO VIGENTE";
+                        {% endif %}
+                        $('.mallaid').append('<option value="{{ m.malla.id }}"> {{ m.malla }} - '+vigente+'</option>');
+                    {% endfor %}
+                {% endif %}
+            };
+
+            window.onloadend = cargar();
+        });
+    </script>
+{% endblock %}
+{% block titulo %}{{ title }} <br>
+{{ title2 }} desde ({{ asignacion.inicio|date:'d-m-Y' }}) hasta ({{  asignacion.fin|date:'d-m-Y' }})
+{% endblock %}
+
+{% block formaction %}/cord_configuracioncomplexivo{% endblock %}
+{% block formdestination %}/cord_configuracioncomplexivo?action=adm_asignacionreactivo{% endblock %}
+{% block formextra %}
+    <input type='hidden' name='action' value='add_asignacionreactivoaleat'/>
+    <input type='hidden' id="asignacion" name='asignacion' value="{{ asignacion.id }}"/>
+    <input type='hidden' id="tipo" name='tipo' value="{{ asignacion.formato.formatoreactivo.tiporeactivo.nombre|lower }}"/>
+{% endblock %}
+{% block formback %}/cord_configuracioncomplexivo?action=adm_asignacionreactivo{% endblock %}
+{% block buttonname %}Guardar{% endblock %}
+{% block formwidth %}form-l{% endblock %}

@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block heading %}
+<script type="text/javascript">
+    $(function () {
+        eliminar = function(){
+            alert('Hi');
+        };
+        $('#add_opcion').click(function () {
+            $('#tbody').append('<tr style="border:hidden"><td><input type="text" class="opcion" style="width:95%"><b> </b><button class="btn btn-mini btn-danger" onclick="eliminar(this)"><i class="fa fa-close"></i></button></td></tr>')
+        });
+        $('#validar').click(function () {
+            var asignatura = $('#asignatura').val();
+            var texto = $('#pregunta').val();
+            var len = $('.opcion').length;
+            if(len!= 0 && texto!=""){
+                $('.opcion').each(function () {
+                   texto = texto + " " + $(this).val();
+                });
+                $.ajax({
+                    type: "POST",
+                    url: "/doc_configuracioncomplexivo",
+                    data: {'action': 'add_similitud','idasignaturamalla': asignatura, 'texto': texto},
+                    success: function(data) {
+                        if (data.result == 'ok') {
+                            smoke.alert('Validado correctamente');
+                            $('#divresult').html('');
+                        } else {
+                            smoke.alert(data.mensaje);
+                            atributos = data.reactivo['atributos'];
+                            opciones = data.reactivo['opciones'];
+                            $('#divresult').html('<div style="text-align:center; color:red">'+data.mensaje+'</div>');
+                            for(detalle in atributos){
+                                $('#divresult').append('<label><b>'+atributos[detalle]['atributo__nombre']+':</b> '+atributos[detalle]['texto']+'</label>');
+                            }
+                            for(detalle in opciones){
+                                $('#divresult').append('<label><b>'+(parseInt(detalle)+1)+':</b> '+opciones[detalle]['texto']+'</label>');
+                            }
+                        }
+                    },
+                    error: function() {
+                        $.unblockUI();
+                        smoke.alert(data.mensaje);
+                    },
+                    dataType: "json"
+                });
+            }else{
+                smoke.alert('Ingresar opciones');
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% block contenidopanel %}
+    <div class="row-fluid no-marging-bottom" style="margin-bottom: 3px;">
+        <div class="well" style="margin-bottom: 3px;padding: 10px;">
+            <h4>{{ title }}</h4>
+        </div>
+    </div>
+    <div class="row-fluid">
+        <div class="well">
+            <div class="row-fluid">
+                <div id="" class="control-group cont-100" style="padding: 1%; min-height:45px; float: left; ">
+                        <div class="control-label" style="line-height: 20px; text-align: right; padding-right: 10px; float: left; width: 150px;">
+                            Materia
+                        </div>
+                        <div class="controls cont-div-100">
+                            <select style="width: 100%" id="asignatura">
+                                {% for a in asignaturas %}
+                                    <option value="{{ a.materia__asignaturamalla }}">{{ a.materia__asignaturamalla__malla__carrera__nombre }}: {{ a.materia__asignaturamalla__asignatura__nombre }}</option>
+                                {% endfor %}
+                            </select>
+                            <p class="help-text" style="font-size: 10px; margin: 0; padding: 0; line-height: 1.1;" alert=""></p>
+                        </div>
+
+                    </div>
+                    <div id="" class="control-group cont-100" style="padding: 1%; min-height:45px; float: left; ">
+                        <div class="control-label" style="line-height: 20px; text-align: right; padding-right: 10px; float: left; width: 150px;">
+                            Pregunta
+                        </div>
+                        <div class="controls cont-div-100">
+                            <textarea formwidth="100" id="pregunta" maxlength="100" name="nombre" type="text" required="" class="" style="width: 100%"></textarea>
+                            <p class="help-text" style="font-size: 10px; margin: 0; padding: 0; line-height: 1.1;" alert=""></p>
+                        </div>
+                    </div>
+                    <div id="" class="control-group cont-100" style="padding: 1%; min-height:45px; float: left; ">
+                        <table class="table table-bordered">
+                            <thead>
+                                <th>Opciones<button class="btn btn-mini btn-success pull-right" id="add_opcion">Agregar</button></th>
+                            </thead>
+                            <tbody id="tbody">
+
+                            </tbody>
+                        </table>
+                    </div>
+                <button class="btn pull-right btn-success" id="validar">Validar</button>
+            </div>
+        </div>
+    </div>
+    <div class="row-fluid" >
+        <div id="divresult" class="well"></div>
+    </div>
+{% endblock %}

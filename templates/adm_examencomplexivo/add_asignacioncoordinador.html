@@ -1,0 +1,935 @@
+{% extends "ajaxformbase.html" %}
+{% block extraheading %}
+    <script type="text/javascript">
+        $(function() {
+            lista_items1 = [];
+            var listafacultad = [];
+            var inicio = "{{ cronograma.inicio|date:'d-m-Y' }}";
+            var fin = "{{ cronograma.fin|date:'d-m-Y' }}";
+            cargar = function () {
+                var index=0;
+                {% for f in facultad %}
+                    if(listafacultad.length==0){
+                        listafacultad = [{id: {{f.id}}, facultad: "{{ f.facultad.nombre }}", carreras:[]}]
+                    }else{
+                        listafacultad.push({id: {{f.id}}, facultad: "{{f.facultad.nombre}}", carreras:[]})
+                    }
+                {% endfor %}
+                for(i=0; i<listafacultad.length; i++){
+                    formdata = new FormData();
+                    formdata.append('action','listar_grupocarreras');
+                    formdata.append('idfacultad',listafacultad[i].id);
+                    formdata.append('index',i);
+                    var index = i;
+                    $.ajax({
+                        type: "POST",
+                        url: "/adm_configuracioncomplexivo",
+                        data: formdata,
+                        success: function(data) {
+                            if (data.result == 'ok') {
+                                for(detalle in data.mensaje){
+                                    var tipo = "";
+                                    if(data.mensaje[detalle]['activocarrera'] == true){
+                                        tipo = "carrera";
+                                    }else{
+                                        tipo = "malla";
+                                    }
+                                    if(listafacultad[data.index].carreras.length==0){
+                                        listafacultad[data.index].carreras = [{id: data.mensaje[detalle]['id'],idcarrera:data.mensaje[detalle]['carrera'],  carrera: data.mensaje[detalle]['carrera__nombre'], tipo: tipo}];
+                                    }else{
+                                        listafacultad[data.index].carreras.push({id: data.mensaje[detalle]['id'], idcarrera:data.mensaje[detalle]['carrera'], carrera: data.mensaje[detalle]['carrera__nombre'], tipo: tipo});
+                                    }
+                                }
+                            }
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            listafacultad[index].carreras = [];
+                        },
+                        dataType: "json",
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    });
+                }
+                console.log(listafacultad);
+                $('.facultad').html('<option value="0">----------</option>');
+                for(i=0;i<listafacultad.length;i++){
+                    $('.facultad').append('<option value="'+listafacultad[i].id+'">'+listafacultad[i].facultad+'</option>');
+                }
+                $('.formato').html('<option value="0">----------</option>');
+                {% for f in formato %}
+                    $('.formato').append('<option value="{{ f.id }}">{{ f.formatoreactivo }}</option>');
+                {% endfor %}
+                $('.carrera').html('<option value="0">----------</option>');
+                $('.malla').html('<option value="0">----------</option>');
+                var hermano = $('#id_malla').siblings('span');
+                var selection = $(hermano[0]).children('span');
+                var selection2 = $(selection[0]).children('span');
+                var ul = $(selection2[0]).children('ul');
+                $(ul[0]).html('');
+                $('.coordinador').html('<option value="0">----------</option>');
+            };
+            window.onload = cargar();
+
+            actualizar_lista1 = function(){
+                $('#tbody').html('');
+                for(i=0;i<lista_items1.length;i++){
+                    if(lista_items1[i].tipo == "carrera"){
+                        var mallas = '<ul style="height: 100%">';
+                        var asignaciones = lista_items1[i].asignaciones;
+                        for(j=0; j<asignaciones.length; j++){
+                            var style="";
+                            if(asignaciones[j].action == "del") style="display:none";
+                            mallas = mallas + '<li style=" width: 100%;'+style+'"><label style="float: left; width: 90%;">'+asignaciones[j].malla+'</label><button style="float: right;" class="btn btn-danger btn-mini" onclick="delmalla(this)" idcarrera="'+lista_items1[i].idcarrera+'" idmalla="'+asignaciones[j].idmalla+'"><i class="fa fa-close"></i></button></li>';
+                        }
+                        mallas = mallas + "</ul>";
+                        var asignar = '<i class="fa fa-check"></i>';
+                        if(lista_items1[i].activoc == false) asignar = '<i class="fa fa-close"></i>';
+                        mallas = mallas.substring(0, mallas.length-2);
+                        var style = "";
+                        if(lista_items1[i].action == "del") style="display:none";
+                        $('#tbody').append('<tr style="'+style+'"><td>'+lista_items1[i].carrera+'</td><td>'+lista_items1[i].coordinador+'</td><td>'+mallas+'</td><td>'+lista_items1[i].formato+'</td><td style="text-align: center">'+lista_items1[i].inicio+'</td><td style="text-align: center">'+lista_items1[i].fin+'</td><td style="text-align: center">'+lista_items1[i].bateria+'</td><td style="text-align: center">'+asignar+'</td><td style="text-align: center"><button class="btn btn-warning btn-mini" onclick="editar(this)" tipo="'+lista_items1[i].tipo+'" idcarrera="'+lista_items1[i].idcarrera+'" ><i class="fa fa-edit"></i></button><b> </b><button class="btn btn-danger btn-mini" onclick="eliminar(this)" tipo="'+lista_items1[i].tipo+'" idcarrera="'+lista_items1[i].idcarrera+'" ><i class="fa fa-close"></i></button></td></tr>')
+                    }else{
+                        var carrera = lista_items1[i].carrera;
+                        style = "";
+                        if(lista_items1[i].action == "del") style="display:none";
+                        for(j=0;j<lista_items1[i].asignaciones.length;j++){
+                            var style="";
+                            var asignaciones = lista_items1[i].asignaciones[j];
+                            var asignar = '<i class="fa fa-check"></i>';
+                            if(asignaciones.activoc == false) asignar = '<i class="fa fa-close"></i>';
+                            if(lista_items1[i].asignaciones[j].action == "del") style="display:none";
+                            $('#tbody').append('<tr style="'+style+'"><td>'+carrera+'</td><td>'+asignaciones.coordinador+'</td><td>'+asignaciones.malla+'</td><td>'+asignaciones.formato+'</td><td style="text-align: center">'+asignaciones.inicio+'</td><td style="text-align: center">'+asignaciones.fin+'</td><td style="text-align: center">'+asignaciones.bateria+'</td><td style="text-align: center">'+asignar+'</td><td style="text-align: center"><button class="btn btn-warning btn-mini" onclick="editar(this)" tipo="'+lista_items1[i].tipo+'" idcarrera="'+lista_items1[i].idcarrera+'" idmalla="'+asignaciones.idmalla+'" ><i class="fa fa-edit"></i></button><b> </b><button class="btn btn-danger btn-mini" onclick="eliminar(this)" tipo="'+lista_items1[i].tipo+'" idcarrera="'+lista_items1[i].idcarrera+'" idmalla="'+asignaciones.idmalla+'"><i class="fa fa-close"></i></button></td></td></tr>')
+
+                        }
+
+                    }
+                }
+                console.log(lista_items1);
+            };
+            llenarmallas = function(idcarrera){
+                $('.malla').html('<option value="0">----------</option>');
+                formdata = new FormData();
+                formdata.append('action','listar_mallas');
+                formdata.append('idcarrera',idcarrera);
+                $.ajax({
+                    type: "POST",
+                    url: "/adm_configuracioncomplexivo",
+                    data: formdata,
+                    success: function(data) {
+                        if (data.result == 'ok') {
+                            for(detalle in data.mensaje){
+                                if(data.mensaje[detalle]['vigente'] == true){
+                                    vigente = "VIGENTE";
+                                }else{
+                                    vigente = "NO VIGENTE";
+                                }
+                                $('.malla').append('<option value="'+data.mensaje[detalle]['id']+'">'+data.mensaje[detalle]['nombre']+' - '+vigente+'</option>');
+                            }
+                        }
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        listafacultad[index].carreras = [];
+                    },
+                    dataType: "json",
+                    cache: false,
+                    contentType: false,
+                    processData: false
+                });
+            };
+            llenarcoordinadores = function(idcarrera){
+                $('.coordinador').html('<option value="0">----------</option>');
+                formdata = new FormData();
+                formdata.append('action','listar_coordinadores');
+                formdata.append('idcarrera',idcarrera);
+                formdata.append('idperiodo','{{cronograma.periodo.id}}');
+                $.ajax({
+                    type: "POST",
+                    url: "/adm_configuracioncomplexivo",
+                    data: formdata,
+                    success: function(data) {
+                        if (data.result == 'ok') {
+                            for(detalle in data.mensaje){
+                                var nombre = data.mensaje[detalle]['persona__nombres'] + " " + data.mensaje[detalle]['persona__apellido1']+ " " + data.mensaje[detalle]['persona__apellido2'];
+                                $('.coordinador').append('<option value="'+data.mensaje[detalle]['id']+'">'+nombre+'</option>');
+                            }
+                        }
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        listafacultad[index].carreras = [];
+                    },
+                    dataType: "json",
+                    cache: false,
+                    contentType: false,
+                    processData: false
+                });
+            };
+            llenarasignaciones = function(idgrupocarrera){
+                lista_items1 = [];
+                var idgrupocarrera = idgrupocarrera;
+                var tipo = $('.tipo').val();
+                formdata = new FormData();
+                formdata.append('action','listar_asignacionescarrera');
+                formdata.append('idcarrera',idgrupocarrera);
+                $.ajax({
+                    type: "POST",
+                    url: "/adm_configuracioncomplexivo",
+                    data: formdata,
+                    success: function(data) {
+                        if (data.result == 'ok') {
+                            if(data.tipo == "carrera"){
+                                for(detalle in data.mensaje){
+                                    var item = {
+                                        action: "none",
+                                        tipo: "carrera",
+                                        idasignacion: data.mensaje[detalle]['id'],
+                                        idfacultad: data.mensaje[detalle]['facultadid'],
+                                        facultad: data.mensaje[detalle]['facultad'],
+                                        idcarrera: data.mensaje[detalle]['carreraid'],
+                                        carrera: data.mensaje[detalle]['carrera'],
+                                        idformato: data.mensaje[detalle]['formatoid'],
+                                        formato: data.mensaje[detalle]['formato'],
+                                        inicio: data.mensaje[detalle]['inicio'],
+                                        fin: data.mensaje[detalle]['fin'],
+                                        activoc: data.mensaje[detalle]['activoc'],
+                                        bateria: data.mensaje[detalle]['bateria'],
+                                        idcoordinador: data.mensaje[detalle]['coordinadorid'],
+                                        coordinador: data.mensaje[detalle]['coordinador'],
+                                        asignaciones:[]
+                                    };
+                                    if(lista_items1.length == 0){
+                                        lista_items1 = [item];
+                                    }else{
+                                        lista_items1.push(item);
+                                    }
+                                    var index = lista_items1.length-1;
+                                    for(det in data.mensaje1){
+                                        var malla = data.mensaje1[det]['malla__nombre'];
+                                        if( data.mensaje1[det]['malla__vigente'] == true) malla = malla + " - VIGENTE";
+                                        else malla = malla + " - NO VIGENTE";
+                                        var item = {
+                                            action: "none",
+                                            idgrupomalla: data.mensaje1[det]['id'],
+                                            idmalla: data.mensaje1[det]['malla__id'],
+                                            malla: malla
+                                        };
+                                        if (lista_items1[index].asignaciones.length == 0) {
+                                            lista_items1[index].asignaciones = [item];
+                                        } else {
+                                            lista_items1[index].asignaciones.push(item);
+                                        }
+                                    }
+                                }
+                            }else{
+                                if(data.mensaje1.length!= 0){
+                                for(detalle in data.mensaje){
+                                    var item = {
+                                        action: "none",
+                                        tipo: "malla",
+                                        idfacultad: data.mensaje[detalle]['facultadid'],
+                                        facultad: data.mensaje[detalle]['facultad'],
+                                        idcarrera: data.mensaje[detalle]['id'],
+                                        carrera: data.mensaje[detalle]['carrera'],
+                                        asignaciones : []
+                                    };
+                                    if(lista_items1.length == 0) lista_items1 = [item]; else lista_items1.push(item);
+                                    var count = lista_items1.length - 1;
+                                    for(det in data.mensaje1){
+                                        var item = {
+                                            action: "none",
+                                            idasignacion: data.mensaje1[det]['id'],
+                                            idgrupomalla: data.mensaje1[det]['grupomallaid'],
+                                            idmalla: data.mensaje1[det]['mallaid'],
+                                            malla: data.mensaje1[det]['malla'],
+                                            idformato: data.mensaje1[det]['formatoid'],
+                                            formato: data.mensaje1[det]['formato'],
+                                            inicio: data.mensaje1[det]['inicio'],
+                                            fin: data.mensaje1[det]['fin'],
+                                            activoc: data.mensaje1[det]['activoc'],
+                                            bateria: data.mensaje1[det]['bateria'],
+                                            idcoordinador: data.mensaje1[det]['coordinadorid'],
+                                            coordinador: data.mensaje1[det]['coordinador']
+                                        };
+                                        if(lista_items1[count].asignaciones.length == 0){
+                                            lista_items1[count].asignaciones = [item];
+                                        }else lista_items1[count].asignaciones.push(item);
+                                    }
+                                }
+                                }
+                            }
+                        }
+                        valilista();
+                        actualizar_lista1();
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        listafacultad[index].carreras = [];
+                    },
+                    dataType: "json",
+                    cache: false,
+                    contentType: false,
+                    processData: false
+                });
+            };
+            limpiarfacultad = function(){
+                $('.carrera').html('<option value="0">----------</option>');
+                $('.carrera').val('0');
+                $('#select2-id_carrera-container').text('----------');
+                $('#select2-id_carrera-container').attr('title','----------');
+                limpiarcarrera();
+            };
+            limpiarcarrera = function(){
+                $('.tipo').val('0');
+                $('#select2-id_tipo-container').text('----------');
+                $('#select2-id_tipo-container').attr('title','----------');
+                $('.coordinador').html('<option value="0">----------</option>');
+                $('.coordinador').val('0');
+                $('#select2-id_coordinador-container').text('----------');
+                $('#select2-id_coordinador-container').attr('title','----------');
+                $('.formato').val('0');
+                $('#select2-id_formato-container').text('----------');
+                $('#select2-id_formato-container').attr('title','----------');
+                var hermano = $('#id_malla').siblings('span');
+                var selection = $(hermano[0]).children('span');
+                var selection2 = $(selection[0]).children('span');
+                var ul = $(selection2[0]).children('ul');
+                $(ul[0]).html('<li class="select2-search select2-search--inline"><input class="select2-search__field" type="search" tabindex="0" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" role="textbox" aria-autocomplete="list" placeholder="" style="width: 0.75em;"></li>');
+                lista_items1 = [];
+                $('#tbody').html('');
+            };
+            limpiaradd = function(){
+                $('.coordinador').val('0');
+                $('.formato').val('0');
+                $('.malla').val(null);
+                $('#select2-id_coordinador-container').text('----------');
+                $('#select2-id_coordinador-container').attr('title','----------');
+                $('#select2-id_formato-container').text('----------');
+                $('#select2-id_formato-container').attr('title','----------');
+                var hermano = $('#id_malla').siblings('span');
+                var selection = $(hermano[0]).children('span');
+                var selection2 = $(selection[0]).children('span');
+                var ul = $(selection2[0]).children('ul');
+                $(ul[0]).html('<li class="select2-search select2-search--inline"><input class="select2-search__field" type="search" tabindex="0" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" role="textbox" aria-autocomplete="list" placeholder="" style="width: 0.75em;"></li>');
+                $('.valiasignar').attr('checked', 'checked');
+                $('.valibateria').val('300');
+            };
+            $('.facultad').on('change',function () {
+               limpiarfacultad();
+               var id = $(this).val();
+               if(id!="0"){
+                   for(i=0;i<listafacultad.length;i++){
+                       if(listafacultad[i].id==id){
+                           for(j=0;j<listafacultad[i].carreras.length;j++){
+                               $('.carrera').append('<option value="'+listafacultad[i].carreras[j].id+'">'+listafacultad[i].carreras[j].carrera+'</option>');
+                           }
+                       }
+                   }
+               }
+            });
+            $('.carrera').on('change', function () {
+                var id = $(this).val();
+                var idcarrera = 0;
+                limpiarcarrera();
+                if(id!="0"){
+                    for(i=0;i<listafacultad.length;i++){
+                       if(listafacultad[i].id=$('.facultad').val()){
+                           carreras = listafacultad[i].carreras;
+                           for(j=0; j<carreras.length;j++){
+                               if(carreras[j].id == $('.carrera').val()){
+                                   idcarrera = carreras[j].idcarrera;
+                                   $('.tipo').val(carreras[j].tipo);
+                                   $('#select2-id_tipo-container').text(carreras[j].tipo.toUpperCase());
+                                   $('#select2-id_tipo-container').attr('title',carreras[j].tipo.toUpperCase());
+                                   break;
+                               }
+                           }
+                       }
+                    }
+                    llenarmallas(idcarrera);
+                    llenarcoordinadores(idcarrera);
+                    llenarasignaciones(id);
+                }
+            });
+            valifecha = function (final, inicial) {
+                //return 0 cuando las fechas son iguales
+                //return 1 cuando la fecha final es mayor a la fecha inicial
+                //return -1 cuando la fecha inicial es mayor a la fecha final
+                var offset = new Date().getTimezoneOffset();
+                var final = new Date(final.split('-')[2],final.split('-')[1] - 1,final.split('-')[0]);
+                var inicial = new Date(inicial.split('-')[2],inicial.split('-')[1] - 1,inicial.split('-')[0]);
+                if(final.getYear() == inicial.getYear()){
+                    if(final.getMonth() == inicial.getMonth()){
+                        if(final.getDate() == inicial.getDate()){
+                            return 0;
+                        }else if(final.getDate() > inicial.getDate()){ //dia final es mayor
+                            return 1;
+                        }else{ //dia inicial es mayor
+                            return -1;
+                        }
+                    }else if(final.getMonth() > inicial.getMonth()){ //mes final es mayor
+                        return 1;
+                    }else{ //mes inicial es mayor
+                        return -1;
+                    }
+                }else if(final.getYear()>inicial.getYear()){ //anio final es mayor
+                    return 1;
+                }else{ //anio inicial es mayor
+                    return -1;
+                }
+             };
+            valirangofechas = function(inicioc, finc){
+                var val="1";
+                if(valifecha(finc, inicioc)!= -1){
+                    if(valifecha(inicioc, inicio) != -1 && valifecha(fin, inicioc)!= -1){
+                        if(valifecha(finc, inicio)!= -1 && valifecha(fin,finc) != -1){
+                            val="1";
+                        }else{
+                            val = "0";
+                        }
+
+                    }else{
+                        val = "0";
+                    }
+                }else{
+                    val = "0";
+                }
+                return val;
+            };
+            valilista = function(){
+                var ban = false;
+                if(lista_items1.length == 1 && lista_items1[0].action == "none"){
+                    ban = false;
+                }else{
+                    if(lista_items1.length == 1 && lista_items1[0].action == "del"){
+                        ban = true;
+                    }else{
+                        for(i=0; i<lista_items1.length; i++){
+                            if(lista_items1[i].action != "del"){
+                                var count = 0;
+                                for(j=0; j<lista_items1[i].asignaciones.length; j++){
+                                    if(lista_items1[i].asignaciones[j].action == "del"){
+                                        count++;
+                                    }
+                                }
+                                if(count == lista_items1[i].asignaciones.length){
+                                    ban = false;
+                                    break;
+                                }else{
+                                    ban = true;
+                                }
+                            }
+                        }
+                    }
+                }
+                if(ban == false) $('[name="valilista"]').val('0');
+                else $('[name="valilista"]').val('1');
+                return ban;
+
+            };
+            vali = function(){
+                var facultad = $('.facultad').val();
+                var carrera = $('.carrera').val();
+                var tipo = $('.tipo').val();
+                var malla = $('.malla').val();
+                if(malla == null) malla="0";else{
+                    for(i=0; i<malla.length; i++){
+                        if(malla[i] == "0"){
+                            malla="0";
+                            break;
+                        }
+                    }
+                }
+                var coordinador = $('.coordinador').val();
+                var formato = $('.formato').val();
+                var inicio = $('.fechainicio').val();
+                var fin = $('.fechafin').val();
+                var fecha = valirangofechas(inicio, fin);
+                var bateria = $('.valibateria').val();
+                var asignar = $('.valiasignar').attr('checked');
+                if(asignar == "checked") asignar = true; else asignar = false;
+                if(fecha!= "0" && facultad !="0" && carrera != "0" && tipo != "0" && malla != "0" && coordinador != "0" && formato != "0" && bateria != ""){
+                    return true;
+                }else return false;
+            };
+            valiadd = function(idcarrera){
+                var ban= true;
+                if(lista_items1.length != 0){
+                   for(i=0;i<lista_items1.length;i++){
+                        if(lista_items1[i].idcarrera == idcarrera && lista_items1[i].action != "del"){
+                            ban = false;
+                            break;
+                        }
+                   }
+               }
+               return ban;
+            };
+            valiaddmalla = function(lista, idmalla){
+                var ban= true;
+                if(lista.length != 0){
+                   for(i=0;i<lista.length;i++){
+                        if(lista[i].idmalla == idmalla && lista[i].action != "del"){
+                            ban = false;
+                            break;
+                        }
+                   }
+                }
+               return ban;
+            };
+            validelmalla = function(index){
+                var count = lista_items1[index].asignaciones.length;
+                if(count == 0 && lista_items1[index].action == "add"){
+                    lista_items1.splice(index,1);
+                }else{
+                    if(lista_items1[index].action != "add" && count == 0){
+
+                    }else{
+
+                    }
+                }
+            };
+            addasignacion = function(tipo){
+                var idfacultad = $('.facultad').val();
+                var facultad = $('#select2-id_facultad-container').text();
+                var idcarrera = $('.carrera').val();
+                var carrera = $('#select2-id_carrera-container').text();
+                var idcoordinador = $('.coordinador').val();
+                var coordinador = $('#select2-id_coordinador-container').text();
+                var idformato = $('.formato').val();
+                var formato = $('#select2-id_formato-container').text();
+                var inicio = $('.fechainicio ').val();
+                var fin = $('.fechafin ').val();
+                var bateria = $('.valibateria ').val();
+                var activoc = "";
+                if($('.valiasignar').attr('checked') == 'checked')
+                    activoc = true;
+                else activoc = false;
+                var mallas = $('.malla').val();
+                if(tipo == "carrera"){
+                    if(valiadd(idcarrera)){
+                        var item = {
+                            action: "add",
+                            tipo: "carrera",
+                            idasignacion: "",
+                            idfacultad: idfacultad,
+                            facultad: facultad,
+                            idcarrera: idcarrera,
+                            carrera: carrera,
+                            idformato: idformato,
+                            formato: formato,
+                            inicio: inicio,
+                            fin: fin,
+                            activoc: activoc,
+                            bateria: bateria,
+                            idcoordinador: idcoordinador,
+                            coordinador: coordinador,
+                            asignaciones: []
+                        };
+                        if(lista_items1.length == 0){
+                            lista_items1 = [item];
+                        }else{
+                            lista_items1.push(item);
+                        }
+                        var index = lista_items1.length - 1;
+                        for(i=0; i<mallas.length; i++){
+                            var hermano = $('#id_malla').siblings('span');
+                            var selection = $(hermano[0]).children('span');
+                            var selection2 = $(selection[0]).children('span');
+                            var ul = $(selection2[0]).children('ul');
+                            var li = $(ul[0]).children('li');
+                            var texto = ($(li[i]).text()).substring(1, $(li[i]).text().length);
+                            var item = {
+                                action: "add",
+                                idgrupomalla: "",
+                                idmalla: mallas[i],
+                                malla: texto
+                            };
+                            if(lista_items1[index].asignaciones.length== 0) lista_items1[index].asignaciones = [item];
+                            else lista_items1[index].asignaciones.push(item);
+                        }
+                        console.log(lista_items1);
+                    }else{
+                        smoke.alert('Editar asignación existente');
+                    }
+                }else{ //por malla
+                    if(valiadd(idcarrera)){
+                        var item = {
+                            action: "add",
+                            tipo: "malla",
+                            idfacultad: idfacultad,
+                            facultad: facultad,
+                            idcarrera: idcarrera,
+                            carrera: carrera,
+                            asignaciones: []
+                        };
+                        if(lista_items1.length == 0){
+                            lista_items1 = [item];
+                        }else{
+                            lista_items1.push(item);
+                        }
+                        var index = lista_items1.length - 1;
+                        for(i=0; i<mallas.length; i++){
+                            var hermano = $('#id_malla').siblings('span');
+                            var selection = $(hermano[0]).children('span');
+                            var selection2 = $(selection[0]).children('span');
+                            var ul = $(selection2[0]).children('ul');
+                            var li = $(ul[0]).children('li');
+                            var texto = ($(li[i]).text()).substring(1, $(li[i]).text().length);
+                            var item = {
+                                action: "add",
+                                idasignacion: "",
+                                idgrupomalla: "",
+                                idmalla: mallas[i],
+                                malla: texto,
+                                idformato: idformato,
+                                formato: formato,
+                                inicio: inicio,
+                                fin: fin,
+                                activoc: activoc,
+                                bateria: bateria,
+                                idcoordinador: idcoordinador,
+                                coordinador: coordinador
+                            };
+                            if(lista_items1[index].asignaciones.length == 0){
+                                lista_items1[index].asignaciones = [item];
+                            }else{
+                                lista_items1[index].asignaciones.push(item);
+                            }
+                        }
+                    }else{ //validar malla
+                        for(i=0; i<lista_items1.length; i++){
+                            if(lista_items1[i].idcarrera == idcarrera && lista_items1[i].action != "del"){
+                                var index = i;
+                                for(j=0; j<mallas.length; j++){
+                                    if(valiaddmalla(lista_items1[i].asignaciones, mallas[j])){
+                                        lista_items1[index].action = "edit";
+                                        var hermano = $('#id_malla').siblings('span');
+                                        var selection = $(hermano[0]).children('span');
+                                        var selection2 = $(selection[0]).children('span');
+                                        var ul = $(selection2[0]).children('ul');
+                                        var li = $(ul[0]).children('li');
+                                        var texto = ($(li[j]).text()).substring(1, $(li[j]).text().length);
+                                        var item = {
+                                            action: "add",
+                                            idasignacion: "",
+                                            idgrupomalla: "",
+                                            idmalla: mallas[j],
+                                            malla: texto,
+                                            idformato: idformato,
+                                            formato: formato,
+                                            inicio: inicio,
+                                            fin: fin,
+                                            activoc: activoc,
+                                            bateria: bateria,
+                                            idcoordinador: idcoordinador,
+                                            coordinador: coordinador
+                                        };
+                                        if(lista_items1[index].asignaciones.length==0){
+                                            lista_items1[index].asignaciones = [item];
+                                        }else{
+                                            lista_items1[index].asignaciones.push(item);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+                }
+            };
+            editasignacion = function(tipo){
+                var id = $('#idoption').val();
+                var idcoordinador = $('.coordinador').val();
+                var coordinador = $('#select2-id_coordinador-container').text();
+                var idformato = $('.formato').val();
+                var formato = $('#select2-id_formato-container').text();
+                var inicio = $('.fechainicio ').val();
+                var fin = $('.fechafin ').val();
+                var bateria = $('.valibateria ').val();
+                var activoc = "";
+                if($('.valiasignar').attr('checked') == 'checked')
+                    activoc = true;
+                else activoc = false;
+                var mallas = $('.malla').val();
+                if(tipo == "carrera"){
+                    for(i=0; i<lista_items1.length; i++){
+                        if(lista_items1[i].action!= "del" && lista_items1[i].idcarrera == id){
+                            if(lista_items1[i].action != "add") lista_items1[i].action = "edit";
+                            lista_items1[i].idcoordinador = idcoordinador;
+                            lista_items1[i].coordinador = coordinador;
+                            lista_items1[i].idformato = idformato;
+                            lista_items1[i].formato = formato;
+                            lista_items1[i].inicio = inicio;
+                            lista_items1[i].fin = fin;
+                            lista_items1[i].bateria = bateria;
+                            lista_items1[i].activoc = activoc;
+                            var index = i;
+                            for(j=0; j<mallas.length; j++){
+                                if(valiaddmalla(lista_items1[index].asignaciones, mallas[j])){
+                                    var hermano = $('#id_malla').siblings('span');
+                                    var selection = $(hermano[0]).children('span');
+                                    var selection2 = $(selection[0]).children('span');
+                                    var ul = $(selection2[0]).children('ul');
+                                    var li = $(ul[0]).children('li');
+                                    var texto = ($(li[j]).text()).substring(1, $(li[j]).text().length);
+                                    var item = {
+                                        action: "add",
+                                        idgrupomalla: "",
+                                        idmalla: mallas[j],
+                                        malla: texto
+                                    };
+                                    if(lista_items1[index].asignaciones.length == 0){
+                                        lista_items1[index].asignaciones = [item];
+                                    }else{
+                                        lista_items1[index].asignaciones.push(item);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }else{
+                    $('.malla').removeAttr('disabled');
+                    for(i=0; i<lista_items1.length; i++){
+                        if(lista_items1[i].action != "del"){
+                            if(lista_items1[i].action != "add") lista_items1[i].action = "edit";
+                            var asignaciones = lista_items1[i].asignaciones;
+                            for(j=0; j<asignaciones.length; j++){
+                                if(asignaciones[j].idmalla == id){
+                                    if(asignaciones[j].action != "del") lista_items1[i].asignaciones[j].action = "edit";
+                                    lista_items1[i].asignaciones[j].idcoordinador = idcoordinador;
+                                    lista_items1[i].asignaciones[j].coordinador = coordinador;
+                                    lista_items1[i].asignaciones[j].idformato = idformato;
+                                    lista_items1[i].asignaciones[j].formato = formato;
+                                    lista_items1[i].asignaciones[j].inicio = inicio;
+                                    lista_items1[i].asignaciones[j].fin = fin;
+                                    lista_items1[i].asignaciones[j].bateria = bateria;
+                                    lista_items1[i].asignaciones[j].activoc = activoc;
+                                }
+                            }
+                        }
+                    }
+                }
+                $('#option').val('add');
+                $('#idoption').val('');
+                actualizar_lista1();
+            };
+            delasignacion = function(tipo){
+
+            };
+            add_asignacion = function () {
+                if(vali()){
+                    var tipo = $('.tipo').val();
+                    var opcion = $('#option').val();
+                    if(opcion=="add"){
+                        addasignacion(tipo);
+                    }else{
+                        editasignacion(tipo);
+                    }
+                    actualizar_lista1();
+                    limpiaradd();
+                    valilista();
+                }else{
+                    smoke.alert('Verificar que los datos sean correctos');
+                }
+            };
+            editar = function (t) {
+                var tipo = $(t).attr('tipo');
+                $('#option').val('edit');
+                var idcarrera = $(t).attr('idcarrera');
+                if(tipo == "carrera"){
+                    for(i=0;i<lista_items1.length; i++){
+                        if(lista_items1[i].idcarrera == idcarrera && lista_items1[i].action != "del"){
+                            $('#idoption').val(idcarrera);
+                            $('#select2-id_coordinador-container').text(lista_items1[i].coordinador);
+                            $('#select2-id_coordinador-container').attr('title',lista_items1[i].coordinador);
+                            $('.coordinador').val(lista_items1[i].idcoordinador);
+                            $('.formato').val(lista_items1[i].idformato);
+                            $('#select2-id_formato-container').text(lista_items1[i].formato);
+                            $('#select2-id_formato-container').attr('title',lista_items1[i].formato);
+                            $('.fechainicio').val(lista_items1[i].inicio);
+                            $('.fechafin').val(lista_items1[i].fin);
+                            $('.valibateria').val(lista_items1[i].bateria);
+                            if(lista_items1[i].activoc == true) $('.valiasignar').attr('checked', 'checked');
+                            else $('.valiasignar').removeAttr('checked');
+                            var lista = [];
+                            var lista2 = [];
+                            for(j=0; j<lista_items1[i].asignaciones.length; j++){
+                                if(lista_items1[i].asignaciones[j].action != "del"){
+                                    if(lista.length == 0){
+                                        lista = [lista_items1[i].asignaciones[j].idmalla];
+                                        lista2 = [lista_items1[i].asignaciones[j].malla];
+                                    }else{
+                                        lista.push(lista_items1[i].asignaciones[j].idmalla);
+                                        lista2.push(lista_items1[i].asignaciones[j].malla);
+                                    }
+                                }
+                            }
+                            $('.malla').val(lista);
+                            var hermano = $('#id_malla').siblings('span');
+                            var selection = $(hermano[0]).children('span');
+                            var selection2 = $(selection[0]).children('span');
+                            var ul = $(selection2[0]).children('ul');
+                            $(ul[0]).html('');
+                            for(k=0; k<lista2.length; k++){
+                                $(ul[0]).append('<li class="select2-selection__choice" title="'+lista2[k]+'"><span class="select2-selection__choice__remove" role="presentation">×</span>'+lista2[k]+'</li>');
+                            }
+                        }
+                    }
+                }else{
+                    var idmalla = $(t).attr('idmalla');
+                    $('.malla').attr('disabled', 'disabled');
+                    for(i=0; i<lista_items1.length; i++){
+                        if(lista_items1[i].action != "del" && lista_items1[i].idcarrera == idcarrera){
+                            var asignaciones = lista_items1[i].asignaciones;
+                            for(j=0; j<asignaciones.length; j++){
+                                if(asignaciones[j].action != "del" && asignaciones[j].idmalla == idmalla){
+                                    $('.malla').val([asignaciones[j].idmalla]);
+                                    $('#idoption').val(asignaciones[j].idmalla);
+                                    $('.formato').val(asignaciones[j].idformato);
+                                    $('.coordinador').val(asignaciones[j].idcoordinador);
+                                    var hermano = $('#id_malla').siblings('span');
+                                    var selection = $(hermano[0]).children('span');
+                                    var selection2 = $(selection[0]).children('span');
+                                    var ul = $(selection2[0]).children('ul');
+                                    $(ul[0]).html('');
+                                    $(ul[0]).append('<li class="select2-selection__choice" title="'+asignaciones[j].malla+'"><span class="select2-selection__choice__remove" role="presentation">×</span>'+asignaciones[j].malla+'</li>');
+                                    $('#select2-id_formato-container').text(asignaciones[j].formato);
+                                    $('#select2-id_formato-container').attr('title',asignaciones[j].formato);
+                                    $('#select2-id_coordinador-container').text(asignaciones[j].coordinador);
+                                    $('#select2-id_coordinador-container').attr('title',asignaciones[j].coordinador);
+                                    if(asignaciones[j].activoc == true) $('.valiasignar').attr('checked', 'checked');
+                                    else $('.valiasignar').removeAttr('checked');
+                                    $('.valibateria').val(asignaciones[j].bateria);
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            eliminar = function (t) {
+                var tipo = $(t).attr('tipo');
+                if(tipo == "carrera"){
+                    for(i=0; i<lista_items1.length; i++){
+                        if(lista_items1[i].action != "del"){
+                            if(lista_items1[i].action == "add"){
+                                lista_items1.splice(i, 1);
+                            }else{
+                                lista_items1[i].action = "del";
+                            }
+                        }
+                    }
+                }else{
+                    var idmalla = $(t).attr('idmalla');
+                    var index=0;
+                    for(i=0; i<lista_items1.length; i++){
+                        index= i;
+                        if(lista_items1[i].action != "del"){
+                            for(j=0; j<lista_items1[i].asignaciones.length; j++){
+                                if(lista_items1[i].asignaciones[j].idmalla == idmalla){
+                                    if(lista_items1[i].asignaciones[j].action == "add"){
+                                        lista_items1[i].asignaciones.splice(j,1);
+                                    }else{
+                                        lista_items1[i].asignaciones[j].action = "del";
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                actualizar_lista1();
+                console.log(lista_items1);
+                if(lista_items1.length != 0){
+                    if(lista_items1[0].asignaciones.length != 0){
+                    $('[name="valilista"]').val('1');
+
+                    }else{
+                    $('[name="valilista"]').val('0');
+
+                    }
+                }else{
+                    if(lista_items1[0].asignaciones.length == 0){
+                         $('[name="valilista"]').val('0');
+                    }else{
+                        $('[name="valilista"]').val('1');
+                        lista_items1[0].action="edit";
+                    }
+
+                }
+            };
+            validelmalla = function(lista){
+                var ban = false;
+                var index = 0;
+                for(i=0; i<lista.length;i++){
+                    if(lista[i].action != "del"){
+                        index ++;
+                    }
+                }
+                if(index == 0){
+                    ban = false;
+                }else if(index == 1){
+                    ban = false;
+                }else{
+                    ban = true;
+                }
+                return ban;
+            };
+            delmalla = function (t) {
+                var idmalla = $(t).attr('idmalla');
+                var idcarrera = $(t).attr('idcarrera');
+                for(i=0; i<lista_items1.length; i++){
+                    var index = i;
+                    if(lista_items1[i].action != "del" && lista_items1[i].idcarrera == idcarrera){
+                        if(validelmalla(lista_items1[i].asignaciones)){
+                            for(j=0; j<lista_items1[index].asignaciones.length; j++){
+                                if(lista_items1[index].asignaciones[j].idmalla == idmalla && lista_items1[index].asignaciones[j].action != "del"){
+                                    if(lista_items1[index].asignaciones[j].action == "add"){
+                                        lista_items1[index].asignaciones.splice(j,1);
+                                    }else{
+                                        lista_items1[index].asignaciones[j].action = "del";
+                                    }
+                                    if(lista_items1[index].action != "add") lista_items1[index].action = "edit";
+                                }
+                            }
+                        }else{
+                            smoke.alert('No se puede eliminar');
+                        }
+                    }
+                }
+                actualizar_lista1();
+                valilista();
+            }
+        });
+    </script>
+{% endblock %}
+{% block titulo %}{{ title }} ({{ cronograma.inicio|date:"d-m-y" }} al {{ cronograma.fin|date:"d-m-y" }}){% endblock %}
+{% block formadicional %}
+    <div class="row-fluid">
+        <button class="btn btn-success pull-right" onclick="add_asignacion()">Agregar</button>
+    </div>
+    <div class="movil-table">
+        <table class="table table-bordered table-hover" id="tablaAtributo">
+            <thead>
+                <th>Carrera</th>
+                <th>Coordinador</th>
+                <th>Malla</th>
+                <th>Formato</th>
+                <th style="text-align: center">Inicio</th>
+                <th style="text-align: center">Fin</th>
+                <th style="text-align: center">Bateria</th>
+                <th style="text-align: center">Asignar</th>
+                <th style="text-align: center">Ajustes</th>
+            </thead>
+            <tbody id="tbody">
+
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+{% block formaction %}/adm_configuracioncomplexivo{% endblock %}
+{% block formdestination %}/adm_configuracioncomplexivo?action=adm_asignacioncoordinador&id={{ cronograma.id }}{% endblock %}
+{% block formextra %}
+    <input type='hidden' name='action' value='add_asignacioncoordinador'/>
+    <input type='hidden' name='valilista' value=''/>
+    <input type='hidden' id='option' value='add'/>
+    <input type='hidden' id='idoption' value=''/>
+{% endblock %}
+{% block formback %}/adm_configuracioncomplexivo?action=adm_asignacioncoordinador&id={{ cronograma.id }}{% endblock %}
+{% block buttonname %}Guardar{% endblock %}

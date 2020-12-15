@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block heading %}
+    <script type="text/javascript">
+    $(function () {
+        llenar_lista = function(){
+            lista = [];
+            $('#tbody tr').each(function () {
+                var item = {cedula: $(this).attr('ced'), nombre:$(this).attr('nombre'),compgeneral:$(this).attr('comgen'),compespecifica:$(this).attr('comesp'),calificacion:$(this).attr('calif'),resultado:$(this).attr('result'),};
+                if(lista.length == 0) lista=[item];
+                else lista.push(item);
+            });
+            return lista;
+        };
+        $('.btn-report').click(function () {
+            var tipo=$(this).attr('tipo');
+            var lista = llenar_lista();
+            $('#extension').val(tipo);
+
+            if(lista.length!=0){
+                $('#lista').val(JSON.stringify(lista));
+                $('#form-enviar').submit();
+            }
+        });
+    });
+    </script>
+{% endblock %}
+{% block contenidopanel %}
+    <div class="row-fluid">
+        <h4>{{ title }}</h4>
+        <h5>CARRERA: {{ examen.carrera.carrera }}</h5>
+        <h5>CRONOGRAMA: {{ examen.planificacion }}</h5>
+        <h5>PERIODO: {{ examen.planificacion.periodo }}</h5>
+    </div>
+    <div class="row-fluid">
+        <div class="btn-group pull-right">
+            <a class="btn btn-mini dropdown-toggle" data-toggle="dropdown" href="javascript:;">Descargar informe <span class="caret"></span></a>
+            <ul class="dropdown-menu pull-right list-group" href="javascript:;" style="text-align: left">
+                <li><a href="javascript:;" class="btn-report" tipo="pdf" title="PDF"> <i class="fa fa-file-pdf-o"></i> PDF </a></li>
+                <li><a href="javascript:;" class="btn-report" tipo="xlsx" title="EXCEL"> <i class="fa fa-file-excel-o"></i> EXCEL </a></li>
+                <li><a href="javascript:;" class="btn-report" tipo="docx" title="WORD"> <i class="fa fa-file-word-o"></i> WORD </a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="row-fluid">
+        <table class="table table-bordered">
+            <thead>
+                <th>Cédula</th>
+                <th>Estudiante</th>
+                <th style="text-align: center">Compe. Generales</th>
+                <th style="text-align: center">Compe. Específicas</th>
+                <th style="text-align: center">Calificación final</th>
+                <th style="text-align: center">Resultado</th>
+                <th style="text-align: center">Detalle</th>
+            </thead>
+            <tbody id="tbody">
+                {% for i in examenes %}
+                    <tr ced="{{ i.estudiante.estudiante.inscripcion.persona.cedula }}" nombre="{{ i.estudiante.estudiante.inscripcion.persona.apellido1 }} {{ i.estudiante.estudiante.inscripcion.persona.apellido2 }} {{ i.estudiante.estudiante.inscripcion.persona.nombres }}" comgen="{{ i.general|floatformat:2  }}" comesp="{{ i.especifico|floatformat:2 }}" calif="{{ i.calificacion|floatformat:2 }}" result="{% if i.calificacion >= i.grupo.notamin %}APROBADO{% else %}REPROBADO{% endif %}">
+                        <td>
+                            {{ i.estudiante.estudiante.inscripcion.persona.cedula }}
+                        </td>
+                        <td>
+                            {{ i.estudiante.estudiante.inscripcion.persona.apellido1 }} {{ i.estudiante.estudiante.inscripcion.persona.apellido2 }} {{ i.estudiante.estudiante.inscripcion.persona.nombres }}
+                        </td>
+                        <td style="text-align: center">
+                            {{ i.general|floatformat:2 }}
+                        </td>
+                        <td style="text-align: center">
+                            {{ i.especifico|floatformat:2 }}
+                        </td>
+                        <td style="text-align: center">
+                            {{ i.calificacion|floatformat:2 }}
+                        </td>
+                        <td style="text-align: center">
+                            {% if i.calificacion >= i.grupo.notamin %}
+                                APROBADO
+                            {% else %}
+                                REPROBADO
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center">
+                            <a class="btn btn-mini btn-warning" target="_blank" href="/adm_configuracioncomplexivo?action=ver_examen&id={{ i.estudiante.id }}"><i class="fa fa-info-circle"></i></a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="12">No existen registros</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="row-fluid hidden">
+        <form action="/reporte" method="POST" id="form-enviar" target="_blank">
+            <input type="hidden" id="action" name="action" value="adm_reportexamen">
+            <input type="hidden" id="id" name="id" value="{{ examen.id }}">
+            <input type="hidden" id="lista" name="lista" value="">
+            <input type="extension" id="extension" name="extension" value="">
+        </form>
+    </div>
+{% endblock %}

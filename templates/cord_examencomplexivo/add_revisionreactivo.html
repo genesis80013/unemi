@@ -1,0 +1,138 @@
+{% extends "ajaxformbase2.html" %}
+{% block extraheading %}
+    <script type="text/javascript">
+        $(function () {
+            lista_items1 = [];
+            cargar = function(){
+                lista_items1 = [];
+                var item = {};
+                {% for d in docentes %}
+                    var estado = true;
+                    {% if d.fila.revision != True %}
+                        estado = false;
+                    {% endif %}
+                    item = {idasignacion: {{ d.fila.id }}, estado:estado};
+                    if(lista_items1.length == 0)
+                        lista_items1 = [item];
+                    else
+                        lista_items1.push(item);
+                {% endfor %}
+            console.log(lista_items1);
+            };
+            window.onloadend = cargar();
+            $('.revision').on('change', function () {
+                var checked = $(this).attr('checked');
+                var idasignacion = $(this).attr('idtr');
+                if (checked){
+                    var formdata = new FormData();
+                    formdata.append('idasignacion',idasignacion);
+                    formdata.append('action','vali_reactivos');
+                    $.ajax({
+                        type: "POST",
+                        url: "/cord_configuracioncomplexivo",
+                        data: formdata,
+                        success: function(data) {
+                            console.log(data.result);
+                            console.log(data.mensaje);
+                            if (data.result == 'ok') {
+                                if(data.mensaje == '1'){
+                                    for(i=0; i<lista_items1.length; i++){
+                                        if(lista_items1[i].idasignacion == formdata.get('idasignacion')){
+                                            lista_items1[i].estado = true;
+                                        }
+                                    }
+                                }else{
+                                    smoke.alert('Existen reactivos por revisar');
+                                    $('#checkbox_'+formdata.get('idasignacion')).removeAttr('checked');
+                                }
+                            } else {
+                                if (data.result == 'session') {
+                                    location.href='/';
+                                }else{
+                                    smoke.alert(data.mensaje);
+                                }
+                            }
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(thrownError);
+                        },
+                        dataType: "json",
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    });
+                }else{
+                    for(i=0; i<lista_items1.length; i++){
+                        if(lista_items1[i].idasignacion == idasignacion){
+                            lista_items1[i].estado = false;
+                            break;
+                        }
+                    }
+                }
+                console.log(lista_items1);
+            });
+        });
+    </script>
+{% endblock %}
+{% block titulo %}
+    <h5>{{ title }}</h5>
+    {% if asignacion.formato.formatoreactivo.tiporeactivo.nombre == "GENERAL" %}
+    <h5>REACTIVOS GENERALES PARA {{ asignacion.periodo }}</h5>
+    {% else %}
+    <h5>{{ title2 }}</h5>
+    {% endif %}
+
+{% endblock %}
+{% block formaction %}/cord_configuracioncomplexivo{% endblock %}
+{% block formdestination %}/cord_configuracioncomplexivo?action=adm_revisionreactivo{% endblock %}
+{% block formback %}/cord_configuracioncomplexivo?action=adm_revisionreactivo{% endblock %}
+{% block formextra %}
+    <div class="row-fluid">
+        <table width="100%" class="table table-bordered" >
+            <thead>
+            {% if asignacion.formato.formatoreactivo.tiporeactivo.nombre == "GENERAL" %}
+                <th>Docente</th>
+                <th>Area</th>
+            {% else %}
+               <th>Malla</th>
+               <th>Asignatura</th>
+               <th>Docente</th>
+            {% endif %}
+                <th style="text-align: center">Fechas</th>
+                <th style="text-align: center">Cantidad</th>
+                <th style="text-align: center">Estado</th>
+                <th style="text-align: center">Reactivos</th>
+                <th style="text-align: center">Revisión</th>
+            </thead>
+            <tbody>
+            {% for d in docentes %}
+                <tr>
+            {% if asignacion.formato.formatoreactivo.tiporeactivo.nombre == "GENERAL" %}
+                    <td>{{ d.fila.persona }}</td>
+                    <td>{{ d.fila.area }}</td>
+            {% else %}
+                    <td>{{ d.fila.asignatura.malla }}</td>
+                    <td>{{ d.fila.asignatura.asignatura }}</td>
+                    <td>{{ d.fila.docente }}</td>
+            {% endif %}
+                    <td style="text-align: center">({{ d.fila.inicio|date:'d-m-Y' }}) a ({{ d.fila.fin|date:'d-m-Y' }})</td>
+                    <td style="text-align: center">{{ d.total }} de {{ d.fila.cantidad }}</td>
+                    <td style="text-align: center">
+                    {% if d.fila.estadofinal %}
+                        <i class="fa fa-check" style="color: green"></i>
+                    {% else %}
+                        <i class="fa fa-close" style="color: red;"></i>
+                    {% endif %}
+                    </td>
+                    <td style="text-align: center">
+                        <a href="/cord_configuracioncomplexivo?action=add_validardocente&id={{ d.fila.id }}" class="btn btn-mini btn-success tu" title="Ver"><i class="fa fa-eye"></i></a>
+                    </td>
+                    <td style="text-align: center;"><input type="checkbox" id="checkbox_{{ d.fila.id }}" idtr="{{ d.fila.id }}" class="revision" {% if d.fila.revision %}checked{% endif %}></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <input type="hidden" name="action" value="add_revisionreactivos">
+    <input type="hidden" name="id" value="{{asignacion.id}}">
+{% endblock %}

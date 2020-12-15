@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block heading %}
+
+{% endblock %}
+{% block contenidopanel %}
+    <div class="row-fluid">
+        <div class="span12">
+            <h3>{{ title }}</h3>
+        </div>
+    </div>
+    <div class="container-fluid table-responsive">
+        <table class="table table-striped table-bordered" valign="middle">
+            <tbody><tr class="">
+                <th style="text-align: center;">
+                    <select id="matriculasel" style="width: 100%" tabindex="-1" class="select2-hidden-accessible" aria-hidden="true">
+                    {% for p in periodo %}
+                        <option value="{{ p.id }}">{{ p }}</option>
+                    {% endfor %}
+                    </select>
+                </th>
+                </tr>
+            </tbody>
+        </table>
+        {% if valigeneral %}
+            <table class="table table-bordered table-hover"  id="valigeneral">
+                <thead>
+                <tr><th colspan="12">Reactivos Generales</th></tr>
+                    <tr>
+                        <th>Docente</th>
+                        <th>Periodo</th>
+                        <th>Planificación</th>
+                        <th>Tipo de reactivo</th>
+                        <th>Inicio</th>
+                        <th>Fin</th>
+                        <th>Bateria</th>
+                        <th style="text-align: center">Asignaciones</th>
+                        <th style="text-align: center">Ajustes</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodygeneral">
+                    <tr>
+                        {% for g in generales %}
+                            <td> {{g.fila.persona}}</td>
+                            <td> {{g.fila.periodo}}</td>
+                            <td> {{cronograma}} ({{ cronograma.inicio|date:'d-m-Y' }} al {{ cronograma.fin|date:'d-m-Y' }})</td>
+                            <td> {{g.fila.formato.formatoreactivo}}</td>
+                            <td> {{g.fila.inicio|date:'d-m-Y'}}</td>
+                            <td> {{g.fila.fin|date:'d-m-Y'}}</td>
+                            <td> {{g.fila.tamaniobateria}}</td>
+                            <td style="text-align: center">
+                                <a href="javascript:;"  nhref="/cord_configuracioncomplexivo?action=adm_asignaciondocente&id={{ g.fila.id }}" class="btn btn-warning btn-mini tu ajaxshowdinamicbs" title="Reactivos"><i class="fa fa-info-circle"></i></a>
+                            </td>
+                            <td style="text-align: center">
+                            {% if g.vali %}
+                                <div class="btn-group">
+                                    <a class="btn btn-mini dropdown-toggle" data-toggle="dropdown" href="javascript:;">Administrar <span class="caret"></span></a>
+                                    <ul class="dropdown-menu pull-right list-group" href="javascript:;" style="text-align: left">
+                                        <li><a href="/cord_configuracioncomplexivo?action=add_asignacionreactivo&id={{ g.fila.id }}"><i class="fa fa-edit"></i> Manual </a></li>
+                                    </ul>
+                                </div>
+                            {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        {% endif %}
+        {% if valiespecifico %}
+            <table class="table table-bordered table-hover"  id="valiespecifico">
+            <thead>
+                <tr>
+                    <th colspan="16">Reactivos específicos</th>
+                </tr>
+            <tr>
+                <th>Facultad</th>
+                <th>Carrera</th>
+                <th>Mallas</th>
+                <th>Coordinador</th>
+                <th>Periodo</th>
+                <th>Planificación</th>
+                <th>Tipo de reactivo</th>
+                <th>Inicio</th>
+                <th>Fin</th>
+                <th>Bateria</th>
+                <th style="text-align: center">Asignaciones</th>
+                <th style="text-align: center">Ajustes</th>
+            </tr>
+            </thead>
+            <tbody id="tbodyespecifico">
+            {% for e in especificos %}
+                <tr>
+                <td> {{e.fila.grupocarrera.grupofacultad.facultad}}</td>
+                <td> {{e.fila.coordinador.carrera}}</td>
+                <td> {% if e.tipo == "carrera" %}
+                    <ul>
+                        {% for m in e.mallas %}
+                            <li>{{m.malla}}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <ul><li>{{ e.mallas.malla }}</li></ul>
+                {% endif %}</td>
+                <td> {{e.fila.coordinador.persona}}</td>
+                <td> {{e.fila.periodo}}</td>
+                <td> {{e.fila.grupocarrera.grupofacultad.grupocronograma}} ({{ cronograma.inicio|date:'d-m-Y' }} al {{ cronograma.fin|date:'d-m-Y' }})</td>
+                <td> {{e.fila.formato.formatoreactivo}}</td>
+                <td> {{e.fila.inicio|date:'d-m-Y'}}</td>
+                <td> {{e.fila.fin|date:'d-m-Y'}}</td>
+                <td> {{e.fila.tamaniobateria}}</td>
+                <td style="text-align: center">
+                    <a href="javascript:;"  nhref="/cord_configuracioncomplexivo?action=adm_asignaciondocente&id={{ e.fila.id }}" class="btn btn-warning btn-mini tu ajaxshowdinamicbs" title="Reactivos"><i class="fa fa-info-circle"></i></a>
+                </td>
+                <td style="text-align: center">
+                    {% if e.vali %}
+                        <div class="btn-group">
+                            <a class="btn btn-mini dropdown-toggle" data-toggle="dropdown" href="javascript:;">Administrar <span class="caret"></span></a>
+                            <ul class="dropdown-menu pull-right list-group" href="javascript:;" style="text-align: left">
+                                <li><a href="/cord_configuracioncomplexivo?action=add_asignacionreactivoaleat&id={{ e.fila.id }}"><i class="fa fa-check-square-o"></i> Aleatorio </a></li>
+                                <li><a href="/cord_configuracioncomplexivo?action=add_asignacionreactivo&id={{ e.fila.id }}"><i class="fa fa-edit"></i> Manual </a></li>
+                            </ul>
+                        </div>
+                    {% endif %}
+                </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+        {% endif %}
+    </div>
+{% endblock %}

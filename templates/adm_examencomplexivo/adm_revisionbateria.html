@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block contenidopanel %}
+    <div class="row-fluid">
+        <h5>{{ title }}</h5>
+    </div>
+    <div class="row-fluid">
+        <table class="table table-bordered">
+            <thead>
+                <th>Cronograma</th>
+                <th></th>
+            </thead>
+            <tbody>
+            {% for c in cronogramas %}
+                <tr>
+                    <td>{{ c }}</td>
+                    <td style="text-align: center;"><a class="btn btn-mini btn-warning" href="/adm_configuracioncomplexivo?action=adm_detallerevision&id={{ c.id }}"><i class="fa fa-edit"></i></a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

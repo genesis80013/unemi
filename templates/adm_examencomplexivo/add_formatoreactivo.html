@@ -1,0 +1,230 @@
+{% extends "ajaxformbase.html" %}
+{% block extraheading %}
+    <script type="text/javascript">
+        $(function() {
+            $("#id_nombre").addClass("validate[required]");
+            limpiar = function(){
+                $('#nombre').val('');
+                $('#detalle').val('');
+                $("#visibleest").removeAttr('checked');
+                $("#visibledoc").removeAttr('checked');
+            };
+            $(".add_atributo").click(function () {
+                $('#myModal').modal('show');
+            });
+            $("#cerrar").click(function () {
+                limpiar();
+                $('#myModal').modal('hide');
+            });
+            eliminar=function(t){
+                var td = t.parentNode;
+                var tr = td.parentNode;
+                var table = tr.parentNode;
+                table.removeChild(tr);
+                actualizar_lista();
+            };
+            actualizar_lista = function () {
+                lista_items1 = [];
+                $('#tbody tr').each(function() {
+                    var item = {nombre: $(this).attr("nom"), detalle: $(this).attr("det"), estvisible: $(this).attr("vest"), docvisible: $(this).attr("vdoc")};
+                    if(lista_items1.length == 0){
+                        lista_items1 = [item];
+                    }else{
+                        lista_items1.push(item);
+                    }
+                }
+                );
+                if(lista_items1.length==0){
+                    $('[name="valilista"]').val('0');
+                }else{
+                    $('[name="valilista"]').val('1');
+                }
+            };
+            $("#agregar").click(function () {
+                var nombre = $("#nombre").val().toUpperCase();
+                var detalle = $("#detalle").val().toUpperCase();
+                var visible_est = $("#visibleest").attr('checked');
+                var visible_doc = $("#visibledoc").attr('checked');
+                var vest = 0;
+                var vdoc = 0;
+                if(visible_est == 'checked'){
+                    visible_est = '<i class="fa fa-check"></i>';
+                    vest = 1;
+                }else{
+                    visible_est = '<i class="fa fa-close"></i>';
+                }
+                if(visible_doc == 'checked'){
+                    visible_doc = '<i class="fa fa-check"></i>';
+                    vdoc = 1;
+                }else{
+                    visible_doc = '<i class="fa fa-close"></i>';
+                }
+                if(nombre!=""){
+                    var count = $('#tbody tr').length + 1;
+                    $('#tbody').append('<tr nom="'+nombre+'" det="'+detalle+'" vest="'+vest+'" vdoc="'+vdoc+'">' +
+                                                    '<td style="text-align:center">'+count+'</td>' +
+                                                    '<td>'+nombre+'</td>' +
+                                                    '<td>'+detalle+'</td>' +
+                                                    '<td style="text-align:center">'+visible_est+'</td>' +
+                                                    '<td style="text-align:center">'+visible_doc+'</td>' +
+                                                    '<td style="text-align: center"><button class="btn btn-danger btn-mini" onclick="eliminar(this)"><i class="fa fa-remove"></button></td>' +
+                                                '</tr>');
+                    limpiar();
+                    $('#myModal').modal('hide');
+                    actualizar_lista();
+                }
+            }) ;
+            $('.cantnota ').on('change',function () {
+                var actual = $(this).val();
+                var tipo = $(this).attr('idtipo');
+                if(tipo == 'min'){
+                    var notamax = $('#id_notamax').val();
+                    if(notamax!=""){
+                        if(actual > notamax){
+                            smoke.alert('La nota mínima no puede ser mayor a la nota máxima');
+                            $(this).val('1');
+                        }
+                    }
+                }else if(tipo == 'max'){
+                    var notamin = $('#id_notamin').val();
+                    if(notamin!=""){
+                        if(notamin > actual){
+                            smoke.alert('La nota máxima no puede ser menor a la nota mínima');
+                        }
+                    }else{
+                        smoke.alert('Ingresar primero la nota mínima');
+                        $(this).val('');
+                    }
+                }
+            });
+            $('.cantopciones ').on('change',function () {
+                var actual = $(this).val();
+                var tipo = $(this).attr('idtipo');
+                if(tipo == 'min'){
+                    var cantmax = $('#id_opcionesmax').val();
+                    if(cantmax!=""){
+                        if(actual > cantmax){
+                            smoke.alert('La cantidad mínima no puede ser mayor a la cantidad máxima');
+                            $(this).val('1');
+                        }
+                    }
+                }else if(tipo == 'max'){
+                    var cantmin = $('#id_opcionesmin').val();
+                    if(cantmin!=""){
+                        if(cantmin > actual){
+                            smoke.alert('La cantidad máxima no puede ser menor a la cantidad mínima');
+                        }
+                    }else{
+                        smoke.alert('Ingresar primero la cantidad de opciones mínima');
+                        $(this).val('');
+                    }
+                }
+            });
+            $('.cantrespuestas  ').on('change',function () {
+                var actual = parseInt($(this).val());
+                var tipo = $(this).attr('idtipo');
+                var opcmax = parseInt($('#id_opcionesmax').val());
+                if(opcmax != ""){
+                    if(tipo == 'min'){
+                        var cantmax = $('#id_respuestasmax').val();
+                        if(actual <= opcmax){
+                            if(cantmax!=""){
+                                if(actual > cantmax){
+                                    smoke.alert('La cantidad mínima no puede ser mayor a la cantidad máxima');
+                                    $(this).val('');
+                                }
+                            }
+                        }else{
+                            smoke.alert('La cantidad de respuestas mínima debe ser menor o igual a la cantidad de opciones máxima');
+                            $(this).val('');
+                        }
+                    }else if(tipo == 'max'){
+                        var cantmin = $('#id_respuestasmin').val();
+                        if(actual <= opcmax){
+                            if(cantmin!=""){
+                                if(cantmin > actual){
+                                    smoke.alert('La cantidad máxima no puede ser menor a la cantidad mínima');
+                                }
+                            }else{
+                                smoke.alert('Ingresar primero la cantidad de respuestas mínima');
+                                $(this).val('');
+                            }
+                        }else{
+                            smoke.alert('La cantidad de respuestas mínima debe ser menor o igual a la cantidad de opciones máxima');
+                            $(this).val('');
+                        }
+                    }
+                }else{
+                    smoke.alert('Ingresar primero la cantidad de opciones máxima');
+                    $(this).val('');
+                }
+            });
+        });
+    </script>
+{% endblock %}
+{% block titulo %}{{ title }}{% endblock %}
+{% block formwidth %}form-l{% endblock %}
+{% block formadicional %}
+    <div class="movil-table">
+        <table class="table table-bordered table-hover" id="tablaAtributo">
+            <thead>
+            <tr>
+                <th colspan="10">CAMPOS DEL FORMATO<a class="btn btn-mini btn-success pull-right add_atributo"><i class="fa fa-plus"></i> Adicionar</a></th>
+            </tr>
+            <tr>
+                <th style="width: 2%; text-align: center">N°</th>
+                <th style="width: 25%; text-align: center">Nombre</th>
+                <th style="width: 45%; text-align: center">Detalle</th>
+                <th style="width: 10%; text-align: center">Docentes</th>
+                <th style="width: 10%; text-align: center">Estudiantes</th>
+                <th style="width: 10%; text-align: center">Acciones</th>
+            </tr>
+            </thead>
+            <tbody id="tbody">
+            </tbody>
+        </table>
+    </div>
+    <div class="modal hide fade" id="myModal">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h3>CAMPOS</h3>
+        </div>
+        <div class="modal-body">
+            <table class="table" style="border: none">
+                <thead>
+                <tr>
+                    <td><b>Nombre</b></td>
+                    <td style="width: 80%;"> <input type="text" id="nombre" style="width: 100%; text-transform: uppercase" class="text-uppercase"> </td>
+                </tr>
+                <tr>
+                    <td><b>Detalle</b></td>
+                    <td style="width: 80%; "> <input type="text" id="detalle" style="width: 100%; text-transform: uppercase" class="text-uppercase"> </td>
+                </tr>
+                <tr>
+                    <td><b>Mostrar a docente</b></td>
+                    <td style="width: 80%; "> <input type="checkbox" id="visibledoc" > </td>
+                </tr>
+                <tr>
+                    <td><b>Mostrar a estudiantes</b></td>
+                    <td style="width: 80%; "> <input type="checkbox" id="visibleest" > </td>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        <div class="modal-footer">
+            <a href="#" class="btn btn-success" id="agregar">Agregar</a>
+
+            <a href="#" class="btn btn-danger" id="cerrar">Cerrar</a>
+        </div>
+    </div>
+{% endblock %}
+{% block formaction %}/adm_configuracioncomplexivo{% endblock %}
+{% block formdestination %}/adm_configuracioncomplexivo?action=adm_formatoreactivo{% endblock %}
+{% block formextra %}
+    <input type='hidden' name='action' value='add_formatoreactivo'/>
+    <input type='hidden' name='valilista' value="0"/>
+{% endblock %}
+{% block formback %}/adm_configuracioncomplexivo?action=adm_formatoreactivo{% endblock %}
+{% block buttonname %}Guardar{% endblock %}

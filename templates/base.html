@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="utf-8">
+    <title>{% block pagetitle %}{{ title }}{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content=“Proyecto">
+    <meta name="author" content=" Proyecto ">
+
+    <script type='text/javascript' src="/static/js/jquery.min.js?1.0.0"></script>
+    <script type='text/javascript' src="/static/js/jquery.blockUI.js?1.0.0"></script>
+    <script type='text/javascript' src="/static/js/jquery.maskedinput.min.js?1.0.0"></script>
+    <script type='text/javascript' src="/static/js/sysend.js?1.0.0"></script>
+    <script type='text/javascript' src="/static/js/smoke.js?1.0.2"></script>
+    <script type='text/javascript' src="/static/js/bs/bootstrap.min.js?1.0.0"></script>
+    <script type='text/javascript' src="/static/js/bootstrap-datepicker.js?1.0.0"></script>
+    <script type='text/javascript' src="/static/js/bootstrap_timepicker_mini.js?1.0.0"></script>
+    <script type='text/javascript' src="/static/js/bootstrap-modal.js?1.0.0"></script>
+    <script type='text/javascript' src="/static/js/bootstrap-modalmanager.js?1.0.0"></script>
+    <script type='text/javascript' src="/static/js/big.min.js?1.1.0"></script>
+    <script type='text/javascript' src='/static/js/jquery.flexbox.js?1.0.0'></script>
+    <script type='text/javascript' src='/static/js/dragdivscroll.js?1.0.0'></script>
+    <script type='text/javascript' src='/static/js/jquery.dataTables.min.js?1.0.0'></script>
+
+
+    <link href="/static/css/smoke.css?1.0.2" rel="stylesheet" type="text/css" media="screen" />
+    <link href="/static/css/bootstrap.min.css?1.0.1" rel="stylesheet"/>
+    <link href="/static/css/bootstrap-responsive.css?1.0.0" rel="stylesheet"/>
+    <link href='/static/css/font-awesome.css?1.0.1' rel='stylesheet'/>
+    <link href='/static/css/font-awesome.min.css?1.0.1' rel='stylesheet'/>
+    <link href="/static/css/stylesbs.css?1.0.6" rel='stylesheet'/>
+    <link href="/static/css/datepicker.css?1.0.0" rel='stylesheet'/>
+    <link href="/static/css/bootstrap-timepicker.css?1.0.0" rel='stylesheet'/>
+    <link href="/static/css/bootstrap-modal.css?1.0.0" rel='stylesheet'/>
+    <link href="/static/css/jquery.flexbox.css?1.0.0" type="text/css" rel="stylesheet" />
+    <link href="/static/css/jquery.dataTables.css?1.0.0" type="text/css" rel="stylesheet" />
+
+    <script type="text/javascript" src="/static/js/jquery.fancybox.pack.js?v=1.0.0"></script>
+    <link rel="stylesheet" href="/static/css/jquery.fancybox.css?v=1.0.0" type="text/css" media="screen" />
+
+    <link rel="stylesheet" href="/static/css/estilosmenu.css" type="text/css"/>
+    <script type="text/javascript" src="/static/js/scriptmenu.js"></script>
+
+    <!--[if lt IE 9]>
+          <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+
+    <link rel="shortcut icon" href="/static/images/aok/favicon.ico">
+    <script>
+        $(function () {
+            bloqueointerface = function(){
+                if (!$(".blockUI").length){
+                    $.blockUI({message: $('#throbber'), css: { 'border': '1px solid', 'border-radius' : '10px', 'left': '46%', 'width':'120px',  'padding': '15px',  '-webkit-border-radius': '10px', '-moz-border-radius': '10px', opacity: .6, color: '#000' }});
+                }
+            };
+
+            $('.selectorfecha').keypress(function(){
+                return false;
+            });
+
+            tipo_formulario = function (elemento) {
+                if (elemento.attr('formtype') == 'form-vertical'){
+                    elemento.find(".control-label").css({'float': 'none'});
+                    elemento.find(".label-text").css({'text-align': 'left'});
+                    elemento.find(".control-label").each(function () {
+                        var contenedor = parseFloat($(this).parent().css('width'))-5;
+                        $(this).css({'width': contenedor.toString() + 'px'});
+                    });
+                    elemento.find(".control").each(function () {
+                        var contenedor = parseFloat($(this).parent().css('width'))-5;
+                        $(this).css({'width': contenedor.toString() + 'px'});
+                    });
+                } else {
+                    elemento.find(".control-label").css({'float': 'left'});
+                    elemento.find(".label-text").css({'text-align': 'right'});
+                    if (elemento.hasClass('form-modal')){
+                        elemento.find(".control-group").each(function () {
+                            var contenedor = parseFloat($(this).parent().width());
+                            var porciento = (parseFloat($(this).width()) / 100);
+                            var tam = parseInt(contenedor * porciento);
+                            $(this).css({'width': tam});
+                        });
+                    }
+                    elemento.find(".control-label").each(function () {
+                        if ($(this).attr('labelwidth')){
+                            $(this).css({'width': $(this).attr('labelwidth')});
+                        } else {
+                            $(this).css({'width': '150px'});
+                        }
+                    });
+                    elemento.find(".control").each(function () {
+                        var contenedor = $(this).parent().width();
+                        var label = parseFloat($(this).parent().find('.control-label').width());
+                        $(this).css({'width': ((contenedor - label) - 20).toString() + 'px'});
+                    });
+                }
+                elemento.find(".select2").css({'width': '100%'});
+            };
+            pop_lista = function (arr, item) {
+                for(var i = arr.length; i--;) {
+                    if(arr[i] === item) {
+                        arr.splice(i, 1);
+                    }
+                }
+            };
+
+            conectar_modaldynamics = function(){
+                var href = $(this).attr('nhref');
+                bloqueointerface();
+                $.ajax({
+                    type: "GET",
+                    url: href,
+                    success: function(data) {
+                        $.unblockUI();
+                        if (data.search('"'+'ajaxdeletedinamicbs'+'"') >= 0) {
+                            $("#eliminacionmodal").html(data);
+                            $('#eliminacionmodal').modal({'width':'650'}).modal('show');
+                        }
+                        else if(data.search('"'+'ajaxshowdinamicbs'+'"') >= 0){
+                                $("#ajaxshowdinamicbs").html(data);
+                            $('#ajaxshowdinamicbs').modal({'width':'1000'}).modal('show');
+                            }
+                        else{
+                            smoke.alert('Error de conexión.');}
+                    },
+                    error: function() {
+                        $.unblockUI();
+                        abrirnotificacionmodal('Error de conexión.');
+                    },
+                    dataType: "html"
+                });
+            };
+            $('.eliminacionmodal').bind('click.conectar_modaldynamics', conectar_modaldynamics);
+            $('.ajaxshowdinamicbs').bind('click.conectar_modaldynamics', conectar_modaldynamics);
+            $('.datetimepicker').datepicker({
+                format: 'dd-mm-yyyy',
+            }).on('changeDate', function (ev) {
+                $(this).datepicker('hide');
+            });
+            $('.timepicker').timepicker({
+                timeFormat: 'h:mm p',
+                interval: 60,
+                minTime: '10',
+                maxTime: '6:00pm',
+                defaultTime: '11',
+                startTime: '10:00',
+                dynamic: false,
+                dropdown: true,
+                scrollbar: true
+            });
+        });
+        var csrftoken = getCookie('csrftoken');
+
+        function csrfSafeMethod(method) {
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+
+    </script>
+
+    <style>
+        .reloj{
+            text-align: right;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+        }
+    </style>
+    <style>
+        .logo_sist{
+            line-height: initial;
+            padding: 3px;
+            float:left;
+        }
+        .logo_sist img{
+            width: 25px;
+            margin-top: -2px;
+            float:left;
+        }
+        .logo_sist .logo_inical{
+            font-size: 22px;
+            font-weight: bold;
+            margin: 2px;
+        }
+        .logo_sist .logo_tite{
+            font-size: 16px;
+            margin-top: 2px;
+        }
+    </style>
+    {% block heading %}
+    {% endblock %}
+</head>
+
+<body data-spy="scroll" data-target=".subnav" data-offset="50">
+
+<div id="nav-header" class="navbar navbar-inverse navbar-fixed-top">
+    <div class="navbar-inner">
+       <div class="container-fluid">
+            <ul class="nav">
+                <li>
+                    <a href="/" class="logo_sist">
+                        <img src="/static/images/aok/logo.png">
+                        <span class="logo_inical">SGA </span><span class="logo_tite">| Sistema de Gestión Académica </span>
+                    </a>
+                </li>
+            </ul>
+           {% if user.is_authenticated %}
+           <div class="pull-right menu_horisontal">
+                <ul class="nav" style="padding-right: -5px; margin-right: -10px">{% if periodoactual %}
+                    <ul class="nav" style="padding-right: -5px; margin-right: -0px;">
+                        <li class="dropdown">
+                            <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown">{{periodoactual}} <b class="caret"></b></a>
+                            <ul class="dropdown-menu pull-right card divScroll square scrollbar-dusty-grass square thin">
+                                <li><a href="javascript:;" class="periodoselector" pid="{{periodoactual.id}}"><i class="fa fa-check"></i> {{periodoactual}}</a></li>{% for periodo in periodos %}
+                                <li><a href="javascript:;" class="periodoselector" pid="{{periodo.id}}"> {{periodo}}</a></li>{% endfor %}
+                            </ul>
+                        </li>
+                    </ul>{% endif %}
+                    <li> <div class="menu-usuario">
+                        <ul class="nav">
+                            <li class="dropdown" id="menu-opcion">
+                                <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown">
+                                    {{ user }} <b class="caret"></b>
+                                </a>
+                                <ul class="dropdown-menu pull-right card">
+                                    <li><a href="/logout" class="logoutuser"><i class="fa fa-power-off"></i> Cerrar Sesión</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div></li>
+
+
+                </ul>
+            </div>
+           {% endif %}
+       </div>
+    </div>
+</div>
+<div id="content">
+<div class='container-fluid table-responsive'>
+    {% if user.is_authenticated %}
+        <div class="row-fluid">
+            <div class="span12">
+                <div id='cssmenu'>
+                    <ul>
+                        {% load auth_extras %}
+                        {%  if user|has_group:"UPA" %}
+                        <li class=""><a href='#'>UPA</a>
+                            <ul>
+                                <li><a href="/adm_configuracioncomplexivo?action=adm_tiporeactivo">Tipos de reactivos</a></li>
+                                <li><a href="/adm_configuracioncomplexivo?action=adm_formatoreactivo">Formatos de reactivos</a></li>
+                                <li><a href="/adm_configuracioncomplexivo?action=adm_areareactivo">Áreas de reactivos</a></li>
+                                <li><a href="/adm_configuracioncomplexivo?action=adm_tipopregunta">Tipos de preguntas</a></li>
+                                <li><a href="/adm_configuracioncomplexivo?action=adm_cronogramaplanificacion">Cronograma</a></li>
+                                <li><a href="/adm_configuracioncomplexivo?action=adm_bateriaexamen">Bateria general</a></li>
+                                <li><a href="/adm_configuracioncomplexivo?action=adm_revisionbateria">Revision de bateria</a></li>
+                                <li><a href="/adm_configuracioncomplexivo?action=adm_cronogramaexamen">Examen complexivo</a></li>
+                                <li><a href="/adm_configuracioncomplexivo?action=adm_impugnacion">Impugnaciones</a></li>
+
+                            </ul>
+                        </li> {% endif %}{% if user|has_group:"COORDINADOR" or user|has_group:"UPA"%}
+                        <li class=""><a href='#'>Coordinador</a>
+                            <ul>
+                                <li><a href="/cord_configuracioncomplexivo?action=adm_asignacionreactivo">Asignaciones de reactivos</a></li>
+                                <li><a href="/cord_configuracioncomplexivo?action=adm_revisionreactivo">Revisión de reactivos</a></li>
+                                <li><a href="/cord_configuracioncomplexivo?action=adm_bateriaexamen">Baterias</a></li>
+                                <li><a href="/cord_configuracioncomplexivo?action=adm_bateriaestudiantes">Asignación de estudiantes</a></li>
+
+                            </ul>
+                        </li> {% endif %} {% if user|has_group:"DOCENTE" or user|has_group:"UPA" or user|has_group:"UPA-OTRO" %}
+                        <li class=""><a href='#'>Docente</a>
+                            <ul>
+                                <li><a href="/doc_configuracioncomplexivo?action=adm_reactivo">Reactivos</a></li>
+                                <li><a href="/doc_configuracioncomplexivo?action=adm_similitud">Similitud de reactivos</a></li>
+                                <li><a href="/doc_configuracioncomplexivo?action=adm_delegadoexamen">Delegado examen</a></li>
+                            </ul>
+                        </li> {% endif %} {% if user|has_group:"ESTUDIANTE" or user|has_group:"UPA" %}
+                        <li class=""><a href='#'>Estudiante</a>
+                            <ul>
+                                <li><a href="/est_configuracioncomplexivo?action=adm_verbateria">Descargar baterias</a></li>
+                                <li><a href="/est_configuracioncomplexivo?action=adm_examencomplexivo">Examen complexivo</a></li>
+                                <li><a href="/est_configuracioncomplexivo?action=adm_simulexamencomplexivo">Simulador de examen</a></li>
+                            </ul>
+                        </li> {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+        <div class="contenedorvirtual">
+
+        </div>
+    {% block contenido %}
+        <div style="width: 100%; float: right" id="contenido80">{% block contenidopanel %}{% endblock %}</div>
+    {% endblock %}
+</div>
+</div>
+<div id="nav-footer" class='navbar navbar-fixed-bottom'>
+    {% block footerextra %}
+    {% endblock %}
+    <div class="container-fluid">
+        <div class='row-fluid'>
+            <div class="span12">
+                <div class="smaller">
+                    <div style="text-align: left; float: left;">
+                        <div style="margin-bottom: -5px">Universidad Técnica Estatal de Quevedo</div>
+                        <div>Todos los derechos reservados(c) 2018<span id="ipcapturada"></span> Sistema de gestión</div>
+                    </div>
+                    <div class="pull-right" style="padding-top: 5px">
+                        <span class="reloj" href="javascript:;" id="clock"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="throbber" style="display:none; margin: 0 auto; width: 60px; height: 60px; background-color: #ffffff">
+    <img src="/static/images/ajax-document-loader.gif" />
+</div>
+<div class="modal fade static" id="eliminacionmodal" style="display: none;"></div>
+<div class="modal fade static" id="ajaxshowdinamicbs" style="display: none;"></div>
+<div id="csrf_tokendiv" style="display: none;">{{ csrf_token }}</div>
+</body>
+</html>

@@ -1,0 +1,1167 @@
+{% extends "ajaxformbase.html" %}
+{% block extraheading %}
+    <script type="text/javascript">
+        $(function() {
+            lista_items1=[];
+            var lista_opciones = [];
+            $('.activaselect').select2();
+            var action = "add";
+            var idaction = 0;
+            valilista = function(){
+                var ban = false;
+                index = 0;
+                for(i=0; i<lista_items1.length; i++){
+                    if(lista_items1[i].action != "del"){
+                        index++;
+                        for(j=0; j<lista_items1[i].ajustes.length; j++){
+                            if(lista_items1[i].ajustes[j].action != "del"){
+                                ban = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if(index == 0){
+                    ban = true;
+                }
+                if(ban){
+                    $('#valiact').val('1');
+                }else{
+                    $('#valiact').val('0');
+                }
+            };
+            limpiar = function(){
+                $('.bateriacarrera').val('');
+                $('#select2-id_bateria-container').text('----------------');
+                $('#select2-id_bateria-container').attr('title','----------------');
+                limpiarest();
+                $('.tiposeleccion').val('');
+                $('#select2-id_tiposeleccion-container').text('----------------');
+                $('#select2-id_tiposeleccion-container').attr('title','----------------');
+                $('.filtroseleccion').val('');
+                $('#select2-id_filtroseleccion-container').text('----------------');
+                $('#select2-id_filtroseleccion-container').attr('title','----------------');
+                $('#tbaleatoriocompleto').addClass('hidden');
+                $('#tbaleatorioseccion').addClass('hidden');
+                $('#tbrangocompleto').addClass('hidden');
+                $('#tbrangoseccion').addClass('hidden');
+            };
+            limpiarest = function(){
+                $('#id_estudiante').val('');
+                var hermano = $('#id_estudiante').siblings('span');
+                var selection = $(hermano[0]).children('span');
+                var selection2 = $(selection[0]).children('span');
+                var ul = $(selection2[0]).children('ul');
+                $(ul[0]).html('<li class="select2-search select2-search--inline"><input class="select2-search__field" type="search" tabindex="0" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" role="textbox" aria-autocomplete="list" placeholder="" style="width: 0.75em;"></li>');
+            };
+            $('.bateriacarrera').change(function () {
+                var id=$(this).val();
+                limpiarest();
+                if(id!=""){
+                    var nombre = $('#select2-id_bateria-container').text();
+                    $('#bateria_rc').text(nombre);
+                    $('#bateria_ac').text(nombre);
+                    var formdata = new FormData();
+                    formdata.append('action','listar_estudiantebateria');
+                    formdata.append('idbateria',id);
+                    formdata.append('idgrupo',{{grupo.id}});
+                    $.ajax({
+                        type: "POST",
+                        url: "/adm_configuracioncomplexivo",
+                        data: formdata,
+                        success: function(data) {
+                            $('.estudiante').html('');
+                            if (data.result == 'ok') {
+                                $('#tamaniobat_ac').text(data.count);
+                                $('#tamaniobat_rc').text(data.count);
+                                for(detalle in data.mensaje){
+                                    $('.estudiante').append('<option value="'+data.mensaje[detalle]['id']+';'+data.mensaje[detalle]['persona']+'">'+data.mensaje[detalle]['persona']+'</option>');
+                                }
+                            } else {
+                                if (data.result == 'session') {
+                                    location.href='/';
+                                }else{
+                                    smoke.alert(data.mensaje);
+                                }
+                            }
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(thrownError);
+                        },
+                        dataType: "json",
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    });
+                }
+            });
+            $('.tiposeleccion').change(function () {
+                var id=$(this).val();
+                var id2=$('.filtroseleccion').val();
+                if(id!="" && id2!=""){
+                    if(id == "1" && id2=="1"){
+                        $('#tbaleatoriocompleto').removeClass('hidden');
+                        $('#tbaleatorioseccion').addClass('hidden');
+                        $('#tbrangocompleto').addClass('hidden');
+                        $('#tbrangoseccion').addClass('hidden');
+                    }else{
+                        if(id=="1" && id2=="2"){
+                            $('#tbaleatoriocompleto').addClass('hidden');
+                            $('#tbaleatorioseccion').removeClass('hidden');
+                            $('#tbrangocompleto').addClass('hidden');
+                            $('#tbrangoseccion').addClass('hidden');
+                        }else{
+                            if(id=="2" && id2 == "1"){
+                                $('#tbaleatoriocompleto').addClass('hidden');
+                                $('#tbaleatorioseccion').addClass('hidden');
+                                $('#tbrangocompleto').removeClass('hidden');
+                                $('#tbrangoseccion').addClass('hidden');
+                            }else{
+                                $('#tbaleatoriocompleto').addClass('hidden');
+                                $('#tbaleatorioseccion').addClass('hidden');
+                                $('#tbrangocompleto').addClass('hidden');
+                                $('#tbrangoseccion').removeClass('hidden');
+                            }
+                        }
+                    }
+                }else{
+                    $('#tbaleatoriocompleto').addClass('hidden');
+                    $('#tbaleatorioseccion').addClass('hidden');
+                    $('#tbrangocompleto').addClass('hidden');
+                    $('#tbrangoseccion').addClass('hidden');
+                }
+            });
+            $('.filtroseleccion').change(function () {
+                var id=$('.tiposeleccion').val();
+                var id2=$('.filtroseleccion').val();
+                if(id!="" && id2!=""){
+                    if(id == "1" && id2=="1"){
+                        $('#tbaleatoriocompleto').removeClass('hidden');
+                        $('#tbaleatorioseccion').addClass('hidden');
+                        $('#tbrangocompleto').addClass('hidden');
+                        $('#tbrangoseccion').addClass('hidden');
+                    }else{
+                        if(id=="1" && id2=="2"){
+                            $('#tbaleatoriocompleto').addClass('hidden');
+                            $('#tbaleatorioseccion').removeClass('hidden');
+                            $('#tbrangocompleto').addClass('hidden');
+                            $('#tbrangoseccion').addClass('hidden');
+                        }else{
+                            if(id=="2" && id2 == "1"){
+                                $('#tbaleatoriocompleto').addClass('hidden');
+                                $('#tbaleatorioseccion').addClass('hidden');
+                                $('#tbrangocompleto').removeClass('hidden');
+                                $('#tbrangoseccion').addClass('hidden');
+                            }else{
+                                $('#tbaleatoriocompleto').addClass('hidden');
+                                $('#tbaleatorioseccion').addClass('hidden');
+                                $('#tbrangocompleto').addClass('hidden');
+                                $('#tbrangoseccion').removeClass('hidden');
+                            }
+                        }
+                    }
+                }else{
+                    $('#tbaleatoriocompleto').addClass('hidden');
+                    $('#tbaleatorioseccion').addClass('hidden');
+                    $('#tbrangocompleto').addClass('hidden');
+                    $('#tbrangoseccion').addClass('hidden');
+                }
+            });
+            actualizar_lista = function(){
+                $('#tblista').html('');
+                for(i=0; i<lista_items1.length; i++){
+                    lista_items1[i].index = i;
+                    var style1 = "", style2="", style3 = "";
+                    if(lista_items1[i].action == "del"){
+                        style1 = "display:none;";
+                    }
+                    var lista1 = "<ul>", lista2 = "<ul>";
+                    for(j=0; j<lista_items1[i].ajustes.length; j++){
+                        lista_items1[i].ajustes[j].index = j;
+                        var aleatorio = '<i class="fa fa-check"></i>';
+                        if(lista_items1[i].ajustes[j].aleatorio == false){
+                            aleatorio = '<i class="fa fa-close"></i>';
+                        }
+                        if(lista_items1[i].ajustes[j].action == "del"){
+                            style2 = "display:none;";
+                        }
+                        if(lista_items1[i].tiposeleccion == "ALEATORIO" && lista_items1[i].filtroseleccion == "COMPLETO"){
+                            lista1 = lista1 + '<li>' +
+                                '<b>Cantidad</b>: ' + lista_items1[i].ajustes[j].cantidad + ' - <b>Aleatorio: </b>' + aleatorio +
+                                '</li>';
+                        }else{
+                            if(lista_items1[i].tiposeleccion == "ALEATORIO" && lista_items1[i].filtroseleccion == "SECCION"){
+                               lista1 = lista1 + '<li>' +
+                                '<b>Sección</b>: ' + lista_items1[i].ajustes[j].asignatura + lista_items1[i].ajustes[j].area + ' - <b>Cantidad</b>: ' + lista_items1[i].ajustes[j].cantidad + ' - <b>Aleatorio: </b>' + aleatorio +
+                                '</li>';
+                            }else{
+                                if(lista_items1[i].tiposeleccion == "RANGO" && lista_items1[i].filtroseleccion == "COMPLETO"){
+                                    lista1 = lista1 + '<li>' +
+                                    '<b>Rango</b>: [' + lista_items1[i].ajustes[j].rangoinicio + ' : ' + lista_items1[i].ajustes[j].rangofin + '] - <b>Cantidad</b>: ' + lista_items1[i].ajustes[j].cantidad + ' - <b>Aleatorio: </b>' + aleatorio +
+                                    '</li>';
+                                }else{
+                                    if(lista_items1[i].tiposeleccion == "RANGO" && lista_items1[i].filtroseleccion == "SECCION"){
+                                       lista1 = lista1 + '<li>' +
+                                        '<b>Sección</b>: ' + lista_items1[i].ajustes[j].asignatura + lista_items1[i].ajustes[j].area + ' - <b>Cantidad</b>: ' + lista_items1[i].ajustes[j].cantidad + ' <b>Rango: </b>['+lista_items1[i].ajustes[j].rangoinicio +':'+lista_items1[i].ajustes[j].rangofin+'] - <b>Aleatorio: </b>' + aleatorio +
+                                        '</li>';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    for(j=0; j<lista_items1[i].estudiantes.length; j++){
+                        lista_items1[i].estudiantes[j].index = j;
+                        if(lista_items1[i].estudiantes[j].action == "del"){
+                            style3 = "display:none;";
+                        }
+                        lista2 = lista2+'<li style="'+style3+'">'+lista_items1[i].estudiantes[j].estudiante+'</li>';
+                    }
+                    lista1 = lista1 + "</ul>";
+                    lista2 = lista2 + "</ul>";
+                    $('#tblista').append('<tr style="'+style1+'">' +
+                        '<td><label><b>Bateria: </b>'+lista_items1[i].bateria+'</label>' +
+                        '<label><b>Tipo de selección: </b>'+lista_items1[i].tiposeleccion+'</label>' +
+                        '<label><b>Filtro: </b>'+lista_items1[i].filtroseleccion+'</label></td>' +
+                        '<td>'+lista1+'</td>' +
+                        '<td>'+lista2+'</td>' +
+                        '<td style="text-align: center;">' +
+                        '<button class="btn btn-mini btn-danger" onclick="eliminar(this);" idtr="'+lista_items1[i].index+'"><i class="fa fa-close"></i></button>' +
+                        '</td></tr>');
+                }
+                valilista();
+            };
+            valiadd = function(tipo, filtro){
+                var ban = false;
+                if(tipo=="1" && filtro == "1"){
+                    var bateria = $('.bateriacarrera').val();
+                    var estudiantes = $('.estudiante').val();
+                    if(bateria != "" && estudiantes != null){
+                        ban = true;
+                    }
+                }else{
+                    if(tipo=="1" && filtro == "2"){
+                        var bateria = $('.bateriacarrera').val();
+                        var estudiantes = $('.estudiante').val();
+                        var count = 0;
+                        for(i=0; i<lista_opciones.length; i++){
+                            if(lista_opciones[i].action != "del") count = count + parseInt(lista_opciones[i].cantidad);
+                        }
+                        if(bateria != "" && estudiantes != null && count == {{ grupo.cantidad }}){
+                            ban = true;
+                        }
+                    }else{
+                        if(tipo=="2" && filtro == "1"){
+                            var bateria = $('.bateriacarrera').val();
+                            var estudiantes = $('.estudiante').val();
+                            var inicio = parseInt($('#txtrcinicio').val());
+                            var fin = parseInt($('#txtrcfin').val());
+                            var bateria = parseInt($('#tamaniobat_rc').text());
+                            if(bateria != "" && estudiantes != null && fin>inicio && (fin-inicio) + 1>={{ grupo.cantidad }} && fin<=bateria && inicio>=1){
+                                ban = true;
+                            }
+                        }else{
+                            if(tipo=="2" && filtro == "2"){
+                                var bateria = $('.bateriacarrera').val();
+                                var estudiantes = $('.estudiante').val();
+                                var count = 0;
+                                for(i=0; i<lista_opciones.length; i++){
+                                    if(lista_opciones[i].action != "del") count = count + parseInt(lista_opciones[i].cantidad);
+                                }
+                                if(bateria != "" && estudiantes != null && count == {{ grupo.cantidad }}){
+                                    ban = true;
+                                }
+                            }
+                        }
+                    }
+                }
+                return ban;
+            };
+            valiest = function(){ //revisar
+                var estudiantes = $('.estudiante').val();
+                lista = [];
+                for(i=0; i<estudiantes.length; i++){
+                    var index1 = 0;
+                    var id = estudiantes[i].split(";")[0];
+                    for(j=0; j<lista_items1.length; j++){
+                        if(lista_items1[j].action!="del"){
+                            for(k=0; k<lista_items1[j].estudiantes.length; k++){
+                                if(lista_items1[j].estudiantes[k].action != "del" && lista_items1[j].estudiantes[k].idestudiante == id){
+                                    index1 = 1;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if(index1 == 0){
+                        if(lista.length == 0){
+                            lista = [estudiantes[i]];
+                        }else{
+                            lista.push(estudiantes[i]);
+                        }
+
+                    }
+                }
+                return lista;
+            };
+            //modales
+            $('#cerraras').click(function () {
+                $('#myModal_as').modal('hide');
+            });
+            valiaddlista2 = function(id, tipo){
+                var ban = true;
+                for(i=0; i<lista_opciones.length; i++){
+                    if(lista_opciones[i].tipo == "area"){
+                        if(lista_opciones[i].idarea == id && lista_opciones[i].action != "del"){
+                            ban = false;
+                            break;
+                        }
+                    }else{
+                        if(lista_opciones[i].idasignatura == id && lista_opciones[i].action != "del"){
+                            ban = false;
+                            break;
+                        }
+                    }
+                }
+                return ban;
+            };
+            actualizar_tbas = function(){
+                $('#traleatorioseccion').html('');
+                for(i=0; i<lista_opciones.length; i++){
+                    lista_opciones[i].index = i;
+                    var seccion = "";
+                    var style="";
+                    if(lista_opciones[i].tipo == "area"){
+                        seccion = lista_opciones[i].area;
+                    }else{
+                        seccion = lista_opciones[i].asignatura;
+                    }
+                    if(lista_opciones[i].action == "del") style="display: none";
+                    $('#traleatorioseccion').append('<tr style="'+style+'"><td>'+seccion+'</td><td>'+lista_opciones[i].cantidad+'</td><td style="text-align:center"><i class="fa fa-check"></i></td><td style="text-align:center"><button class="btn btn-mini btn-danger" onclick="eliminarseccion(this);" idtr="'+lista_opciones[i].index+'"><i class="fa fa-close"></i></button></td></td>');
+                }
+            };
+            actualizar_tbrs = function(){
+                $('#trrangoseccion').html('');
+                for(i=0; i<lista_opciones.length; i++){
+                    lista_opciones[i].index = i;
+                    var seccion = "";
+                    var style="";
+                    if(lista_opciones[i].tipo == "area"){
+                        seccion = lista_opciones[i].area;
+                    }else{
+                        seccion = lista_opciones[i].asignatura;
+                    }
+                    if(lista_opciones[i].action == "del") style="display: none";
+                    $('#trrangoseccion').append('<tr style="'+style+'"><td>'+seccion+'</td><td>'+lista_opciones[i].cantidad+'</td><td>'+lista_opciones[i].rangoinicio+'</td><td>'+lista_opciones[i].rangofin+'</td><td style="text-align:center"><i class="fa fa-check"></i></td><td style="text-align:center"><button class="btn btn-mini btn-danger" onclick="eliminarseccion(this);" idtr="'+lista_opciones[i].index+'"><i class="fa fa-close"></i></button></td></td>');
+                }
+            };
+            eliminarseccion = function(t){
+                var id = $(t).attr('idtr');
+                indice = null;
+                for(i=0; i<lista_opciones.length; i++){
+                    if(lista_opciones[i].index == id && lista_opciones[i].action == "add"){
+                        indice = i;
+                        break;
+                    }else{
+                        if(lista_opciones[i].index == id && lista_opciones[i].action != "add"){
+                            lista_opciones[i].action ="del";
+                            break;
+                        }
+                    }
+                }
+                if(indice!= null){
+                    lista_opciones.splice(indice,1);
+                }
+                if($('.tiposeleccion').val() == "1" && $('.filtroseleccion').val() == "2"){
+                    actualizar_tbas();
+                }else{
+                    actualizar_tbrs();
+                }
+            };
+            $('#agregaras').click(function () {
+                try{
+                    $('#myModal_as').modal('hide');
+                    var tipo = $('.tiposeleccion').val();
+                    var filtro = $('.filtroseleccion').val();
+                    if(tipo == "1" && filtro == "2"){ //aleatorio por seccion
+                        var idseccion = $('#idsecciones').val().split(';')[0];
+                        var seccion = $('#idsecciones').val().split(';')[1];
+                        var total = parseInt($('#idsecciones').val().split(';')[2]);
+                        var tipo = $('#idsecciones').val().split(';')[3];
+                        var cantidad = parseInt($('#txtcantidad').val());
+                        if(valiaddlista2(idseccion, tipo) && parseInt(cantidad)<=parseInt(total)){ //es nuevo
+                            var index = lista_opciones.length;
+                            var item = {};
+                            if(tipo == "area"){
+                                item = {
+                                    index: index,
+                                    id:null,
+                                    action:"add",
+                                    tipo:"area",
+                                    idarea: idseccion,
+                                    area: seccion,
+                                    idasignatura: "",
+                                    asignatura: "",
+                                    rangoinicio: null,
+                                    rangofin: null,
+                                    cantidad: parseInt(cantidad),
+                                    aleatorio: true
+                                }
+                            }else{
+                                item = {
+                                    index: index,
+                                    id:null,
+                                    action:"add",
+                                    tipo:"asig",
+                                    idarea: "",
+                                    area: "",
+                                    idasignatura: idseccion,
+                                    asignatura: seccion,
+                                    rangoinicio: null,
+                                    rangofin: null,
+                                    cantidad: parseInt(cantidad),
+                                    aleatorio: true
+                                }
+                            }
+                            if(lista_opciones.length == 0){
+                                lista_opciones = [item];
+                            }else{
+                                lista_opciones.push(item);
+                            }
+                            console.log(lista_opciones);
+                        }else{ //ya existe
+                            if(parseInt(cantidad)>parseInt(total)){
+                                smoke.alert('Error en el formulario');
+                            }else{//editar
+                                for(i=0; i<lista_opciones.length; i++){
+                                    if(tipo == "area"){
+                                        if(lista_opciones[i].action!= "del" && lista_opciones[i].idarea == idseccion){
+                                            lista_opciones[i].cantidad = cantidad;
+                                            if(lista_opciones[i].action!="add") lista_opciones[i].action="edit";
+                                        }
+                                    }else{
+                                        if(lista_opciones[i].action!= "del" && lista_opciones[i].idasignatura == idseccion){
+                                            lista_opciones[i].cantidad = cantidad;
+                                            if(lista_opciones[i].action!="add") lista_opciones[i].action="edit";
+                                        }
+                                    }
+                                }
+                            }
+
+                        }
+                        actualizar_tbas();
+                    }else{
+                        if(tipo == "2" && filtro == "2"){
+                            var idseccion = $('#idsecciones').val().split(';')[0];
+                            var seccion = $('#idsecciones').val().split(';')[1];
+                            var total = $('#idsecciones').val().split(';')[2];
+                            var tipo = $('#idsecciones').val().split(';')[3];
+                            var cantidad = $('#txtcantidad').val();
+                            var inicio = $('#txtinicio').val();
+                            var fin = $('#txtfin').val();
+                            if(valiaddlista2(idseccion, tipo) && parseInt(cantidad)<=parseInt(total) && (parseInt(fin)-parseInt(inicio)) + 1 >= parseInt(cantidad) && parseInt(inicio)>=1 && parseInt(fin)<=parseInt(total)){
+                                var index = lista_opciones.length;
+                                var item = {};
+                                if(tipo == "area"){
+                                    item = {
+                                        index: index,
+                                        id:null,
+                                        action:"add",
+                                        tipo:"area",
+                                        idarea: idseccion,
+                                        area: seccion,
+                                        idasignatura: "",
+                                        asignatura: "",
+                                        rangoinicio: parseInt(inicio),
+                                        rangofin: parseInt(fin),
+                                        cantidad: parseInt(cantidad),
+                                        aleatorio: true
+                                    }
+                                }else{
+                                    item = {
+                                        index: index,
+                                        id:null,
+                                        action:"add",
+                                        tipo:"asig",
+                                        idarea: "",
+                                        area: "",
+                                        idasignatura: idseccion,
+                                        asignatura: seccion,
+                                        rangoinicio: parseInt(inicio),
+                                        rangofin: parseInt(cantidad),
+                                        cantidad: parseInt(cantidad),
+                                        aleatorio: true
+                                    }
+                                }
+                                if(lista_opciones.length == 0){
+                                    lista_opciones = [item];
+                                }else{
+                                    lista_opciones.push(item);
+                                }
+                                console.log(lista_opciones);
+                            }else{
+                                if(valiaddlista2(idseccion, tipo) == false && parseInt(cantidad)<=parseInt(total) && (fin-inicio) + 1 >=cantidad && inicio>=1 && fin<=total){ //editar
+                                    for(i=0; i<lista_opciones.length; i++){
+                                        if(tipo == "area"){
+                                            if(lista_opciones[i].action!= "del" && lista_opciones[i].idarea == idseccion){
+                                                lista_opciones[i].cantidad = parseInt(cantidad);
+                                                lista_opciones[i].inicio = parseInt(inicio);
+                                                lista_opciones[i].fin = parseInt(fin);
+                                                if(lista_opciones[i].action!="add") lista_opciones[i].action="edit";
+                                            }
+                                        }else{
+                                            if(lista_opciones[i].action!= "del" && lista_opciones[i].idasignatura == idseccion){
+                                                lista_opciones[i].cantidad = parseInt(cantidad);
+                                                lista_opciones[i].inicio = parseInt(inicio);
+                                                lista_opciones[i].fin = parseInt(fin);
+                                                if(lista_opciones[i].action!="add") lista_opciones[i].action="edit";
+                                            }
+                                        }
+                                    }
+                                }else{
+                                    smoke.alert('Datos erroneos');
+                                }
+                            }
+                            actualizar_tbrs();
+                            $('#txtinicio').val('')
+                            $('#txtfin').val('')
+                        }
+                    }
+
+                }catch (e) {
+                    smoke.alert('Error');
+                }
+            });
+            $('#idsecciones').change(function () {
+                var id = $(this).val();
+                if(id!=""){
+                    $('#txttotal').val(id.split(";")[2]);
+                }else{
+                    $('#txttotal').val("");
+                }
+            });
+            cargarsecciones = function(bateria){
+                var formdata = new FormData();
+                formdata.append('action', 'listar_secciones');
+                formdata.append('idbateria', bateria);
+                $('#txttotal').val("");
+                $('#txtcantidad').val("");
+                $('#idsecciones').html('<option value="">---------------------</option>');
+                $('#select2-idsecciones-container').text('---------------------');
+                $('#select2-idsecciones-container').attr('title','---------------------');
+                $.ajax({
+                    type: "POST",
+                    url: "/adm_configuracioncomplexivo",
+                    data: formdata,
+                    success: function(data) {
+                        if (data.result == 'ok') {
+                            for(detalle in data.mensaje){
+                                $('#idsecciones').append('<option value="'+data.mensaje[detalle]['id']+';'+data.mensaje[detalle]['seccion']+';'+data.mensaje[detalle]['total']+';'+data.mensaje[detalle]['tipo']+'">'+data.mensaje[detalle]['seccion']+'</option>');
+                            }
+                        } else {
+                            if (data.result == 'session') {
+                                location.href='/';
+                            }else{
+                                smoke.alert(data.mensaje);
+                            }
+                        }
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        alert(thrownError);
+                    },
+                    dataType: "json",
+                    cache: false,
+                    contentType: false,
+                    processData: false
+                });
+            };
+            addas = function(){
+                var vali = $('.bateriacarrera').val();
+                if(vali!=""){
+                    $('#myModal_as').modal({'width':'800'}).modal('show');
+                    $('#trinicio').addClass('hidden');
+                    $('#trfin').addClass('hidden');
+                    cargarsecciones(vali);
+                }else{
+                    smoke.alert('Seleccionar bateria');
+                }
+
+            };
+            addrs = function(){
+                var vali = $('.bateriacarrera').val();
+                if(vali!=""){
+                    $('#myModal_as').modal({'width':'800'}).modal('show');
+                    $('#trinicio').removeClass('hidden');
+                    $('#trfin').removeClass('hidden');
+                    cargarsecciones(vali);
+                }else{
+                    smoke.alert('Seleccionar bateria');
+                }
+            };
+            //otras funciones
+            editar = function(t){
+                var id = parseInt($(t).attr('idtr'));
+                action = "add";
+                for(i=0; i<lista_items1.length; i++){
+                    if(lista_items1[i].index == id){
+                        if(lista_items1[i].idtiposeleccion == "1" && lista_items1[i].idfiltroseleccion == "1"){//ALEATORIO COMPLETO
+                            $('.bateriacarrera').val(lista_items1[i].idbateria);
+                            $('.bateriacarrera').click();
+                            $('#select2-id_bateria-container').text(lista_items1[i].bateria);
+                            $('#select2-id_bateria-container').attr('title',lista_items1[i].bateria);
+                        }else{
+                            if(lista_items1[i].idtiposeleccion == "1" && lista_items1[i].idfiltroseleccion == "2"){//ALEATORIO SECCION
+
+                            }else{
+                                if(lista_items1[i].idtiposeleccion == "2" && lista_items1[i].idfiltroseleccion == "1"){//rango completo
+
+                                }else{//rango SECCION
+
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            eliminar = function(t){
+                var id = $(t).attr('idtr');
+                var index = null;
+                for(i=0; i<lista_items1.length; i++){
+                    if(lista_items1[i].index == id){
+                        if(lista_items1[i].action != "add"){
+                            lista_items1[i].action = "del";
+                        }else{
+                            index = i;
+                            break;
+                        }
+                    }
+                }
+                if(index!= null){
+                    lista_items1.splice(i,1);
+                }
+                actualizar_lista();
+                console.log(lista_items1);
+            };
+            addbat_aleatoriocompleto = function(){
+                //validar que al menos un estudiante no se encuentre en otro grupo
+                var estudiantes = valiest();
+                if(estudiantes.length != 0){
+                    var index = lista_items1.length;
+                    var item = {
+                        index:index,
+                        id:null,
+                        action: "add",
+                        idbateria: $('.bateriacarrera').val(),
+                        bateria: $('#select2-id_bateria-container').text(),
+                        idtiposeleccion: $('.tiposeleccion').val(),
+                        tiposeleccion: $('#select2-id_tiposeleccion-container').text(),
+                        idfiltroseleccion: $('.filtroseleccion').val(),
+                        filtroseleccion: $('#select2-id_filtroseleccion-container').text(),
+                        ajustes: [],
+                        estudiantes: []
+                    };
+                    var item2 = {
+                        index: 0,
+                        id:null,
+                        action:"add",
+                        idarea: "",
+                        area: "",
+                        idasignatura: "",
+                        asignatura: "",
+                        rangoinicio: null,
+                        rangofin: null,
+                        cantidad: parseInt({{grupo.cantidad}}),
+                        aleatorio: true
+                    };
+                    if(lista_items1.length == 0) lista_items1 = [item];
+                    else lista_items1.push(item);
+                    if(lista_items1[index].ajustes.length == 0) lista_items1[index].ajustes = [item2];
+                    else lista_items1[index].ajustes.push(item2);
+                    //estudiantes
+                    for(i=0; i<estudiantes.length; i++){
+                        var indice = lista_items1[index].estudiantes.length;
+                        var item = {
+                            index:indice,
+                            id:null,
+                            action:'add',
+                            idestudiante:estudiantes[i].split(';')[0],
+                            estudiante:estudiantes[i].split(';')[1]
+                        };
+                        if(lista_items1[index].estudiantes.length == 0) lista_items1[index].estudiantes = [item];
+                        else lista_items1[index].estudiantes.push(item);
+                    }
+                    console.log(lista_items1);
+                    actualizar_lista();
+
+                }else{
+                    smoke.alert('Todos los estudiantes seleccionados ya constan en un grupo');
+                }
+            };
+            addbat_aleatorioseccion = function(){
+                //validar que al menos un estudiante no se encuentre en otro grupo
+                var estudiantes = valiest();
+                if(estudiantes.length != 0){
+                    var index = lista_items1.length;
+                    var item = {
+                        index:index,
+                        id:null,
+                        action: "add",
+                        idbateria: $('.bateriacarrera').val(),
+                        bateria: $('#select2-id_bateria-container').text(),
+                        idtiposeleccion: $('.tiposeleccion').val(),
+                        tiposeleccion: $('#select2-id_tiposeleccion-container').text(),
+                        idfiltroseleccion: $('.filtroseleccion').val(),
+                        filtroseleccion: $('#select2-id_filtroseleccion-container').text(),
+                        ajustes: [],
+                        estudiantes: []
+                    };
+                    if(lista_items1.length == 0) lista_items1 = [item];
+                    else lista_items1.push(item);
+                    lista_items1[index].ajustes = lista_opciones;
+                    //estudiantes
+                    for(i=0; i<estudiantes.length; i++){
+                        var indice = lista_items1[index].estudiantes.length;
+                        var item = {
+                            index:indice,
+                            id:null,
+                            action:'add',
+                            idestudiante:estudiantes[i].split(';')[0],
+                            estudiante:estudiantes[i].split(';')[1]
+                        };
+                        if(lista_items1[index].estudiantes.length == 0) lista_items1[index].estudiantes = [item];
+                        else lista_items1[index].estudiantes.push(item);
+                    }
+                    console.log(lista_items1);
+                    actualizar_lista();
+                }else{
+                    smoke.alert('Todos los estudiantes seleccionados ya constan en un grupo');
+                }
+            };
+            addbat_rangocompleto = function(){
+                //validar que al menos un estudiante no se encuentre en otro grupo
+                var estudiantes = valiest();
+                if(estudiantes.length != 0){
+                    var index = lista_items1.length;
+                    var item = {
+                        index:index,
+                        id:null,
+                        action: "add",
+                        idbateria: $('.bateriacarrera').val(),
+                        bateria: $('#select2-id_bateria-container').text(),
+                        idtiposeleccion: $('.tiposeleccion').val(),
+                        tiposeleccion: $('#select2-id_tiposeleccion-container').text(),
+                        idfiltroseleccion: $('.filtroseleccion').val(),
+                        filtroseleccion: $('#select2-id_filtroseleccion-container').text(),
+                        ajustes: [],
+                        estudiantes: []
+                    };
+                    if(lista_items1.length == 0) lista_items1 = [item];
+                    else lista_items1.push(item);
+                    var item2 = {
+                        index: 0,
+                        id:null,
+                        action:"add",
+                        idarea: "",
+                        area: "",
+                        idasignatura: "",
+                        asignatura: "",
+                        rangoinicio: parseInt($('#txtrcinicio').val()),
+                        rangofin: parseInt($('#txtrcfin').val()),
+                        cantidad: parseInt({{grupo.cantidad}}),
+                        aleatorio: true
+                    };
+                    lista_items1[index].ajustes = [item2];
+                    //estudiantes
+                    for(i=0; i<estudiantes.length; i++){
+                        var indice = lista_items1[index].estudiantes.length;
+                        var item = {
+                            index:indice,
+                            id:null,
+                            action:'add',
+                            idestudiante:estudiantes[i].split(';')[0],
+                            estudiante:estudiantes[i].split(';')[1]
+                        };
+                        if(lista_items1[index].estudiantes.length == 0) lista_items1[index].estudiantes = [item];
+                        else lista_items1[index].estudiantes.push(item);
+                    }
+                    console.log(lista_items1);
+                    actualizar_lista();
+                    $('#txtrcinicio').val('');
+                    $('#txtrcfin').val('');
+                }else{
+                    smoke.alert('Todos los estudiantes seleccionados ya constan en un grupo');
+                }
+            };
+            addbat_rangoseccion = function(){
+                //validar que al menos un estudiante no se encuentre en otro grupo
+                var estudiantes = valiest();
+                if(estudiantes.length != 0){
+                    var index = lista_items1.length;
+                    var item = {
+                        index:index,
+                        id:null,
+                        action: "add",
+                        idbateria: $('.bateriacarrera').val(),
+                        bateria: $('#select2-id_bateria-container').text(),
+                        idtiposeleccion: $('.tiposeleccion').val(),
+                        tiposeleccion: $('#select2-id_tiposeleccion-container').text(),
+                        idfiltroseleccion: $('.filtroseleccion').val(),
+                        filtroseleccion: $('#select2-id_filtroseleccion-container').text(),
+                        ajustes: [],
+                        estudiantes: []
+                    };
+                    if(lista_items1.length == 0) lista_items1 = [item];
+                    else lista_items1.push(item);
+                    lista_items1[index].ajustes = lista_opciones;
+                    //estudiantes
+                    for(i=0; i<estudiantes.length; i++){
+                        var indice = lista_items1[index].estudiantes.length;
+                        var item = {
+                            index:indice,
+                            id:null,
+                            action:'add',
+                            idestudiante:estudiantes[i].split(';')[0],
+                            estudiante:estudiantes[i].split(';')[1]
+                        };
+                        if(lista_items1[index].estudiantes.length == 0) lista_items1[index].estudiantes = [item];
+                        else lista_items1[index].estudiantes.push(item);
+                    }
+                    console.log(lista_items1);
+                    actualizar_lista();
+                }else{
+                    smoke.alert('Todos los estudiantes seleccionados ya constan en un grupo');
+                }
+            };
+            addbateria = function(){
+                try{
+                    var tipo=$('.tiposeleccion').val();
+                    var filtro=$('.filtroseleccion').val();
+                    var vali = valiadd(tipo,filtro);
+                    if(vali){
+                        if(tipo == "1" && filtro == "1"){ //aleatoriocompleto
+                            if(action == "add"){
+                                addbat_aleatoriocompleto();
+                            }else{
+                                //editar
+
+                                action = "add";
+                            }
+                        }else{
+                            if(tipo == "1" && filtro == "2"){ //aleatorio por categoria
+                                if(action == "add"){
+                                    addbat_aleatorioseccion();
+                                }else{
+
+                                }
+                            }else{
+                                if(tipo=="2" && filtro == "1"){
+                                    if(action == "add"){
+                                        addbat_rangocompleto();
+                                    }else{
+
+                                    }
+                                }else{
+                                    if(tipo == "2" && filtro == "2"){
+                                        if(action == "add"){
+                                            addbat_rangoseccion();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        limpiar();
+                        $('#traleatorioseccion').html('');
+                        $('#trrangoseccion').html('');
+                        lista_opciones = [];
+                    }else{
+                        smoke.alert('datos erroneos en el formulario.');
+                    }
+
+                }catch (e) {
+                    smoke.alert('Error');
+                }
+            };
+            cargar = function () {
+                limpiarest();
+                $('.tiposeleccion ').prepend('<option value="">---------------</option>');
+                $('.tiposeleccion ').val('');
+                $('#select2-id_tiposeleccion-container').attr('title','---------------');
+                $('#select2-id_tiposeleccion-container').text('---------------');
+                $('.filtroseleccion').prepend('<option value="">---------------</option>');
+                $('.filtroseleccion ').val('');
+                $('#select2-id_filtroseleccion-container').text('---------------');
+                $('#select2-id_filtroseleccion-container').attr('title','---------------');
+                //lenar baterias
+                {% for i in baterias %}
+                    $('.bateriacarrera').append('<option value="{{ i.bateriacarrera }}">BATERIA {{ i.bateriacarrera__carrera__carrera__nombre }} {% if i.bateriacarrera__malla__malla__nombre %}{{ i.bateriacarrera__malla__malla__nombre }}{% endif %} EN {{ i.bateriacarrera__bateria__periodo__nombre }}</option>');
+                {% endfor %}
+                {% for g in grupos %}
+                    var item1 = {
+                        index: {{ forloop.counter0 }},
+                        id: {{ g.bateria.id }},
+                        action: 'none',
+                        idbateria: "{{ g.bateria.bateria.id }}",
+                        bateria: "BATERIA {{ g.bateria.bateria.carrera.carrera }}{% if g.bateria.bateria.malla %}{{g.bateria.bateria.carrera.carrera.malla}}{% endif %} EN {{ g.bateria.bateria.bateria.periodo }}",
+                        ajustes: [],
+                        estudiantes: [],
+                        idtiposeleccion: "{{ g.bateria.tiposeleccion }}",
+                        tiposeleccion: "{% if g.bateria.tiposeleccion == 1 %}ALEATORIO{% else %}RANGO{% endif %}",
+                        idfiltroseleccion: "{{ g.bateria.filtroseleccion }}",
+                        filtroseleccion: "{% if g.bateria.filtroseleccion == 1 %}COMPLETO{% else %}SECCION{% endif %}",
+                    };
+                    {% for e in g.estudiantes %}
+                        var item2 = {
+                            index: {{ forloop.counter0 }},
+                            id: {{ e.id }},
+                            action: "none",
+                            idestudiante: "{{ e.estudiante.id }}",
+                            estudiante: "{{ e.estudiante.inscripcion.persona }}"
+                        };
+                        if(item1.estudiantes.length == 0){
+                            item1.estudiantes = [item2];
+                        }else{
+                            item1.estudiantes.push(item2);
+                        }
+                    {% endfor %}
+                    {% for e in g.ajustes %}
+                        var item3 = {
+                            index: {{ forloop.counter0 }},
+                            id: {{ e.id }},
+                            action: "none",
+                            aleatorio: true,
+                            idarea:"{% if e.area %}{{ e.area.id }}{% endif %}",
+                            area:"{% if e.area %}{{ e.area }}{% endif %}",
+                            idasignatura:"{% if e.asignatura %}{{ e.asignatura.id }}{% endif %}",
+                            asignatura:"{% if e.asignatura %}{{ e.asignatura.asignatura.nombre }}{% endif %}",
+                            cantidad: {{e.cantidad}},
+                            rangofin: {% if e.rangoinicio %}{{ e.rangoinicio }}{% else %}null{% endif %},
+                            rangoinicio: {% if e.rangofin %}{{ e.rangofin }}{% else %}null{% endif %}
+                        };
+                        if(item1.ajustes.length == 0){
+                            item1.ajustes = [item3];
+                        }else{
+                            item1.ajustes.push(item3);
+                        }
+                    {% endfor %}
+                    if(lista_items1.length == 0){
+                        lista_items1 = [item1];
+                    }else{
+                        lista_items1.push(item1);
+                    }
+                {% endfor %}
+            console.log(lista_items1);
+                valilista();
+            };
+            window.onloadend = cargar();
+            //validar que al menos 1 est no se encuentre en otro subgrupo
+        });
+    </script>
+{% endblock %}
+{% block titulo %}
+    {{ title }}
+    <h5>Grupo: {{ grupo.nombre }}</h5>
+    <h5>Cantidad de reactivos: {{ grupo.cantidad }}</h5>
+    <h5>Tipo de examen: {% if grupo.tipoexamen == 1 %}AVANZAR Y RETROCEDER{% elif grupo.tipoexamen == 2 %}AVANZAR{% else %}TIEMPO{% endif %}</h5>
+{% endblock %}
+{% block formwidth %}form-lg{% endblock %}
+{% block formaction %}/adm_configuracioncomplexivo{% endblock %}
+{% block formdestination %}/adm_configuracioncomplexivo?action=adm_grupoexamen&id={{ grupo.cronogramaexamen.id }}{% endblock %}
+{% block formadicional %}
+    <div class="row-fluid hidden" id="tbaleatoriocompleto">
+        <table class="table table-bordered">
+            <thead>
+                <tr><th colspan="12">Filtro</th></tr>
+                <tr>
+                <th>Bateria</th>
+                <th>Tamaño de bateria</th>
+                <th style="text-align: center;">Cantidad de preguntas</th>
+                <th style="text-align: center;">Aleatorio</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="bateria_ac"></td>
+                    <td id="tamaniobat_ac"></td>
+                    <td style="text-align: center;">{{ grupo.cantidad }}</td>
+                    <td style="text-align: center;"><i class="fa fa-check"></i></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="row-fluid hidden" id="tbaleatorioseccion">
+        <table class="table table-bordered">
+            <thead>
+                <tr><th colspan="12"><button class="btn btn-mini btn-success pull-right" onclick="addas();"><i class="fa fa-plus"></i></button></th></tr>
+                <tr>
+                    <th>Sección</th>
+                    <th>Cantidad</th>
+                    <th style="text-align: center;">Aleatorio</th>
+                    <th style="text-align: center;">Ajustes</th>
+                </tr>
+            </thead>
+            <tbody id="traleatorioseccion">
+
+            </tbody>
+        </table>
+    </div>
+    <div class="row-fluid hidden" id="tbrangocompleto">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Bateria</th>
+                    <th>Total de reactivos</th>
+                    <th>Cantidad</th>
+                    <th>Inicio</th>
+                    <th>Fin</th>
+                    <th style="text-align: center;">Aleatorio</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="bateria_rc"></td>
+                    <td id="tamaniobat_rc"></td>
+                    <td>{{ grupo.cantidad }}</td>
+                    <td id="inicio_rc"><input type="number" min="1" id="txtrcinicio"></td>
+                    <td id="fin_rc"><input type="number" min="1" id="txtrcfin"></td>
+                    <td style="text-align: center;"><i class="fa fa-check"></i></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="row-fluid hidden" id="tbrangoseccion">
+        <table class="table table-bordered">
+            <thead>
+                <tr><th colspan="12"><button class="btn btn-mini btn-success pull-right" onclick="addrs();"><i class="fa fa-plus"></i></button></th></tr>
+                <tr>
+                    <th>Sección</th>
+                    <th>Cantidad</th>
+                    <th>Inicio</th>
+                    <th>Fin</th>
+                    <th style="text-align: center;">Aleatorio</th>
+                    <th style="text-align: center;">Ajustes</th>
+                </tr>
+            </thead>
+            <tbody id="trrangoseccion">
+            </tbody>
+        </table>
+    </div>
+    <div class="row-fluid">
+        <button class="btn btn-lg btn-success pull-right" onclick="addbateria();">Agregar bateria</button>
+    </div>
+    <div class="row-fluid">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th colspan="12">Asignaciones</th>
+                </tr>
+                <tr>
+                    <th>Detalles</th>
+                    <th>Filtro</th>
+                    <th>Estudiantes</th>
+                    <th>Ajustes</th>
+                </tr>
+            </thead>
+            <tbody id="tblista">
+            {% for g in grupos %}
+                <tr>
+                   <td>
+                        <label><b>Bateria: </b> BATERIA {{ g.bateria.bateria.carrera.carrera }} {% if g.bateria.bateria.malla %}{{g.bateria.bateria.carrera.carrera.malla}}{% endif %} EN {{ g.bateria.bateria.bateria.periodo }}</label>
+                        <label><b>Tipo de selección: </b> {% if g.bateria.tiposeleccion == 1 %}ALEATORIO{% else %}RANGO{% endif %}</label>
+                        <label><b>Filtro de selección: </b> {% if g.bateria.filtroseleccion == 1 %}COMPLETO{% else %}SECCION{% endif %}</label>
+                   </td>
+                    <td>
+                    <ul>
+                        {% for a in g.ajustes %}
+                            <li>
+                                {% if g.bateria.tiposeleccion == 1 and  g.bateria.filtroseleccion == 1 %}
+                                    <b>Cantidad: </b> {{ a.cantidad }},
+                                    <b>Aleatorio: </b> <i class="fa fa-check"></i>
+                                {% elif g.bateria.tiposeleccion == 1 and  g.bateria.filtroseleccion == 2 %}
+                                    <b>Sección: </b> {% if a.area %}{{ a.area }}{% else %}{{ a.asignatura.asignatura }}{% endif %},
+                                    <b>Cantidad: </b> {{ a.cantidad }},
+                                    <b>Aleatorio: </b> <i class="fa fa-check"></i>
+                                {% elif g.bateria.tiposeleccion == 2 and  g.bateria.filtroseleccion == 1 %}
+                                    <b>Rango: </b> [{{ a.rangoinicio }}:{{ a.rangofin }}],
+                                    <b>Cantidad: </b> {{ a.cantidad }},
+                                    <b>Aleatorio: </b> <i class="fa fa-check"></i>
+                                {% elif g.bateria.tiposeleccion == 2 and  g.bateria.filtroseleccion == 2 %}
+                                    <b>Sección: </b> {% if a.area %}{{ a.area }}{% else %}{{ a.asignatura.asignatura }}{% endif %},
+                                    <b>Cantidad: </b> {{ a.cantidad }},
+                                    <b>Rango: </b> [{{ a.rangoinicio }}:{{ a.rangofin }}],
+                                    <b>Aleatorio: </b> <i class="fa fa-check"></i>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    </td>
+                   <td>
+                        {% for e in g.estudiantes %}
+                            <ul>
+                                <li>{{ e.estudiante.inscripcion.persona }}</li>
+                            </ul>
+                        {% endfor %}
+                   </td>
+                    <td style="text-align: center;">
+                        <button class="btn btn-mini btn-danger" onclick="eliminar(this);" idtr="{{ forloop.counter0  }}" title="Eliminar"><i class="fa fa-close"></i></button>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="modal fade hide" id="myModal_as">
+        <div class="modal-header"><h5 id="header1">Secciones</h5></div>
+        <div class="modal-body">
+            <div class='well'>
+                <div class="row-fluid">
+                    <table style="border: hidden; width: 100%; background-color: transparent;">
+                        <tr style="border: hidden" id="trseccion">
+                            <td style="width: 30%"><b>Sección: </b></td>
+                            <td>
+                                <select class="activaselect" style="width: 100%" id="idsecciones"></select>
+                            </td>
+                        </tr>
+                        <tr style="border: hidden" id="trtotalreactivos">
+                            <td style="width: 30%"><b>Total de reactivos: </b></td>
+                            <td id="tdtotalreactivos">
+                                <input type="number" readonly value="" id="txttotal"  style="width: 100%">
+                            </td>
+                        </tr>
+                        <tr style="border: hidden" id="trcantidad">
+                            <td style="width: 30%"><b>Cantidad: </b></td>
+                            <td id="tdcantidad">
+                                <input type="number" min="1" id="txtcantidad"  style="width: 100%">
+                            </td>
+                        </tr>
+                        <tr style="border: hidden" id="trinicio">
+                            <td style="width: 30%"><b>Inicio: </b></td>
+                            <td id="tdinicio">
+                                <input type="number" min="1" id="txtinicio"  style="width: 100%">
+                            </td>
+                        </tr>
+                        <tr style="border: hidden" id="trfin">
+                            <td style="width: 30%"><b>Fin: </b></td>
+                            <td id="tdfin">
+                                <input type="number" min="1" id="txtfin"  style="width: 100%">
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <p style="text-align: right; margin-bottom: 0">
+                <a href="javascript:;" id="agregaras" class="btn btn-success"> Agregar</a>
+                <a href="javascript:;" id="cerraras" class="btn btn-danger"> Cerrar</a>
+                <input type="hidden" id="act_modal" value="add">
+                <input type="hidden" id="id_modal" value="">
+            </p>
+        </div>
+    </div>
+{% endblock %}
+{% block formextra %}
+    <input type='hidden' name='action' value='add_grupoexamenconfiguracion'/>
+    <input type='hidden' name='id' value='{{grupo.id}}'/>
+    <input type='hidden' id="valiact" name='vali' value='0'/>
+{% endblock %}
+{% block formback %}/adm_configuracioncomplexivo?action=adm_grupoexamen&id={{ grupo.cronogramaexamen.id }}{% endblock %}
+{% block buttonname %}Guardar{% endblock %}

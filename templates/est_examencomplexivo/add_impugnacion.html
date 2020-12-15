@@ -1,0 +1,155 @@
+{% extends 'ajaxformbase.html' %}
+{% block extraheading %}
+    <script type="text/javascript">
+        $(function () {
+            //esconder botones de ajax
+            $('#formbutton').addClass('hidden');
+            $('.bloqueo_pantalla').addClass('hidden');
+            //otros
+            $('.activaselect').select2();
+            $("#formsimul").validationEngine({autoHidePrompt:true, autoHideDelay:1000 });
+            llenar_areas = function(){
+                lista = [];
+                $('.activa_area:checked').each(function () {
+                    var id = $(this).attr('idtr').split(';')[0];
+                    var tipo = $(this).attr('idtr').split(';')[1];
+                    var item = {'id': id, 'tipo': tipo};
+                    if(lista.length == 0){
+                        lista = [item];
+                    }else{
+                        lista.push(item);
+                    }
+                });
+                return lista;
+            };
+            llenar_preguntas = function(){
+                lista = [];
+                $('.activa_reactivo:checked').each(function () {
+                    var id = $(this).attr('idtr');
+                    var item = {'id': id};
+                    if(lista.length == 0){
+                        lista = [item];
+                    }else{
+                        lista.push(item);
+                    }
+                });
+                return lista;
+            };
+            $('#identrar').click(function () {
+                var valid = $("#formsimul").validationEngine('validate');
+                if(valid){
+                    //bloqueointerface();
+                    var areas = llenar_areas();
+                    var preguntas = llenar_preguntas();
+                    if(areas.length!=0 || preguntas.length!=0){
+                        var descripcion = $('#id_descripcion').val();
+                        $.ajax({
+                            type: "POST",
+                            url: "/est_configuracioncomplexivo",
+                            data: {"action":"add_impugnacion","id":"{{ estudiante.id }}","areas":JSON.stringify(areas),"descripcion":descripcion,"preguntas":JSON.stringify(preguntas)},
+                            success: function(data) {
+                                if (data.result == 'ok') {
+                                    location.href = "/est_configuracioncomplexivo?action=adm_detalleexamencomplexivo&id={{estudiante.id}}";
+                                } else {
+                                    smoke.alert(data.mensaje);
+                                }
+                            },
+                            error: function() {
+                                $.unblockUI();
+                                smoke.alert(data.mensaje);
+                            },
+                            dataType: "json"
+                        });
+                    }else{
+                        smoke.alert('Seleccionar reactivos');
+                    }
+
+                }else{
+                    setTimeout(function() {
+                        $('.help-text').each(function () {
+                            var field = $(this);
+                            if (field.attr('alert')) {
+                                field.html(field.attr('alert'));
+                            } else {
+                                field.html('');
+                            }
+                        });
+                    }, 8000);
+                    $.unblockUI();
+                }
+
+            });
+        });
+</script>
+{% endblock %}
+{% block titulo %}
+    {{ title }}
+    <h5>EXAMEN: {{ estudiante.grupoexamen.cronogramaexamen }}</h5>
+    <h5>GRUPO: {{ estudiante.grupoexamen }}</h5>
+    <h5>HORA: {{ estudiante.grupoexamen.inicio }} - {{ estudiante.grupoexamen.fin }}</h5>
+    <h5>PREGUNTAS: {{ estudiante.grupoexamen.cantidad }}</h5>
+{% endblock %}
+{% block formwidth %}form-lg{% endblock %}
+{% block formadicional %}
+    <form id="formsimul">
+    <div class="row-fluid">
+        <div id="" class="control-group cont-100" style="padding: 1%; min-height:45px; float: left; ">
+            <div class="control-label" style="line-height: 20px; text-align: right; padding-right: 10px; float: left; width: 150px;">
+                Descripción
+            </div>
+            <div class="controls cont-div-100">
+                <textarea type="number" formwidth="100" id="id_descripcion" class="validate[required]" name="descripcion" style="width: 100%"></textarea>
+                <p class="help-text" style="font-size: 10px; margin: 0; padding: 0; line-height: 1.1;" alert=""></p>
+            </div>
+        </div>
+        <div class="tree well" style="overflow-y: auto;height: 250px; padding-top: 5px; padding-left: 5px; padding-right: 5px; padding-bottom: 5px;">
+            <table class="table table-bordered">
+                <thead><th colspan="4">Seleccionar</th></thead>
+                <tbody>
+                {% for a in areas %}
+                    <tr>
+                    <td>
+                        {{ a.nombre }}
+                    </td>
+                    <td style="text-align: center">
+                        <input type="checkbox" class="activa_area" tipo="area" idtr="{{ a.id }};{{ a.tipo }}">
+                    </td>
+                    </tr>
+                {% endfor %}
+                {% for a in reactivos %}
+                    <tr>
+                        <td>
+                            <label><b>N: </b>{{ forloop.counter }}</label>
+                            <label><b>Tipo de pregunta: </b>{{ a.tipopregunta }}</label>
+                            {% if a.area %}
+                            <label><b>Area: </b>{{ a.area.nombre }}</label>
+                            {% else %}
+                            <label><b>Asignatura: </b>{{ a.asignatura.asignatura.nombre }}</label>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% for i in a.atributos %}
+                                <label><b>{{ i.atributo__nombre }} :</b>{{ i.texto }} {% if i.archivo %} <img src="/media/{{ i.archivo }}">{% endif %}</label>
+                            {% endfor %}
+                        </td>
+                        <td style="text-align: center;">
+                            <input type="checkbox" class="activa_reactivo" tipo="reactivo" idtr="{{ a.reactivo.id }}">
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row-fluid">
+        <div style="text-align: right;">
+            <a class="btn btn-success btn-form" id="identrar">Guardar</a>
+            <a class="btn btn-danger btn-form" id="idcancelar" href="/est_configuracioncomplexivo?action=adm_detalleexamencomplexivo&id={{ estudiante.id }}">Cancelar</a>
+        </div>
+    </div>
+    </form>
+{% endblock %}
+{% block formextra %}
+    <input type='hidden' name='action' value='add_impugnacion'/>
+    <input type='hidden' name='id' value='{{estudiante.id}}'/>
+{% endblock %}

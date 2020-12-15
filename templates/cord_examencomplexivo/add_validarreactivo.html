@@ -1,0 +1,11 @@
+{% extends "ajaxformbase2.html" %}
+{% block extraheading %}
+{% endblock %}
+{% block titulo%}
+    <h5>{{ title }}</h5>
+{% endblock %}
+{% block formaction %}/cord_configuracioncomplexivo{% endblock %}
+{% block formdestination %}/cord_configuracioncomplexivo?action=add_validarreactivo&id={{reactivo.id}}{% endblock %}
+{% block formback %}/doc_configuracioncomplexivo?action=adm_reactivo{% endblock %}
+{% block buttonname %}Siguiente{% endblock %}
+{% block cancelname %} Salir {% endblock %}

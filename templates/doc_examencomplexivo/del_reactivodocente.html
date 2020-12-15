@@ -1,0 +1,7 @@
+{% extends "ajaxdeletedinamicbs.html" %}
+{% block titulo %}{{ title }}{% endblock %}
+{% block formaction %}/doc_configuracioncomplexivo{% endblock %}
+{% block formdestination %}/doc_configuracioncomplexivo?action=add_reactivodocente&id={{ reactivo.asignaciondocente.id }}{% endblock %}
+{% block formactionvalue %}del_reactivodocente{% endblock %}
+{% block formobjectid %}{{ reactivo.id }}{% endblock %}
+{% block formobjectrepr %}{{ nombre }}{% endblock %}

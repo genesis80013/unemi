@@ -1,0 +1,746 @@
+{% extends "ajaxformbase.html" %}
+{% block extraheading %}
+    <script type="text/javascript">
+        $(function() {
+            lista_items1 = [];
+            lista_items2 = [];
+            lista_items3 = [];
+            $(".activaselect").select2();
+            valiformato = function(){
+                var count = 0;
+                $('.tipo').each(function () {
+                    var ch = $(this).attr('checked');
+                    if(ch=='checked'){
+                        count++;
+                    }else{
+                        count--;
+                    }
+                });
+                if(count == lista_items3.length){
+                    $('[name="valiformato"]').val('1');
+                }else{
+                    $('[name="valiformato"]').val('0');
+                }
+            };
+            cargar = function () {
+                $('.tipo').each(function () {
+                    var idf = $(this).attr('idf');
+                    var ch = $(this).attr('checked');
+                    if(ch=='checked'){
+                        ch = 1;
+                    }else{
+                        ch = 0;
+                    }
+                    if(lista_items3.length==0){
+                        lista_items3 = [{idformato: idf, activo: ch}];
+                    }else{
+                        lista_items3.push({idformato: idf, activo: ch});
+                    }
+                });
+                valiformato();
+                console.log(lista_items3);
+            };
+            window.onloadend = cargar();
+            $('.valiperiodo').on('change',function () {
+                var periodo = $(this).val();
+                if(periodo != ""){
+                    var formdata = new FormData();
+                    formdata.append("action", 'vali_cronogramaperiodo');
+                    formdata.append("id", periodo);
+                    $.ajax({
+                        type: "POST",
+                        url: "/adm_configuracioncomplexivo",
+                        data: formdata,
+                        success: function(data) {
+                            console.log(data.result);
+                            if (data.result == 'ok') {
+                                if(data.mensaje == '0'){
+                                       $('[name="valiperiodo"]').val('0');
+                                }else{
+                                    $('[name="valiperiodo"]').val('1');
+                                    smoke.alert('El periodo seleccionado ya tiene un cronograma')
+                                }
+                            } else {
+                                if (data.result == 'session') {
+                                    location.href='/';
+                                }else{
+                                    smoke.alert(data.mensaje);
+                                }
+                            }
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(thrownError);
+                        },
+                        dataType: "json",
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    });
+                }
+            });
+            $("#cerrar").click(function () {
+                $('#ModalGeneral').modal('hide');
+            });
+            $("#cerrar2").click(function () {
+                $('#ModalEspecifico').modal('hide');
+            });
+            $('.facultad').on('change', function () {
+               if($(this).val()!=""){
+                   var facultad = $(this).val().split(';')[0];
+                   var formdata = new FormData();
+                   formdata.append("action", 'listar_carreras');
+                   formdata.append("idfacultad", facultad);
+                   $.ajax({
+                       type: "POST",
+                       url: "/adm_configuracioncomplexivo",
+                       data: formdata,
+                       success: function(data) {
+                           console.log(data.mensaje);
+                           if (data.result == 'ok') {
+                               $('#idcarrera').html('<option>----------</option>');
+                               for(detalle in data.mensaje){
+                                   $('#idcarrera').append('<option value="'+data.mensaje[detalle]['id']+';'+data.mensaje[detalle]['nombre']+'">'+data.mensaje[detalle]['nombre']+'</option>');
+                               }
+                           }else{
+                               if(data.result == 'session'){
+                                   location.href='/';
+                               }else{
+                                   smoke.alert(data.mensaje);
+                               }
+                           }
+                       },
+                       error: function(xhr, ajaxOptions, thrownError) {
+                           alert(thrownError);
+                       },
+                       dataType: "json",
+                       cache: false,
+                       contentType: false,
+                       processData: false
+                   });
+               }
+            });
+            limpiarModalGeneral = function(){
+                $('#idgeneral').val('');
+                $('#idasignacion').val('');
+                $('#formatoc').val('');
+                $('#inicioc').val('');
+                $('#finc').val('');
+                $('#bateria').val('');
+                $('#select2-idgeneral-container').attr('title','----------');
+                $('#select2-idgeneral-container').text('----------');
+                $('#select2-formatoc-container').attr('title','----------');
+                $('#select2-formatoc-container').text('----------');
+            };
+            limpiarModalEspecifico = function(){
+                $('#idfacultad').val('');
+               $('#idcarrera').val('');
+               $('#idcarrera').click();
+               $('#idtipocarrera').val('');
+               $('#idfacultad option:first').prop('selected',true);
+               $('#idcarrera').html('<option>----------</option>');
+               $('#select2-idtipocarrera-container').attr('title','----------');
+               $('#select2-idtipocarrera-container').text('----------');
+               $('#select2-idfacultad-container').attr('title','----------');
+               $('#select2-idfacultad-container').text('----------');
+               $('#select2-idcarrera-container').attr('title','----------');
+               $('#select2-idcarrera-container').text('----------');
+               var hermano = $('#idcarrera').siblings('span');
+               var selection = $(hermano[0]).children('span');
+               var selection2 = $(selection[0]).children('span');
+               var ul = $(selection2[0]).children('ul');
+               $(ul[0]).html(' ');
+            };
+            valifecha = function (final, inicial) {
+                //return 0 cuando las fechas son iguales
+                //return 1 cuando la fecha final es mayor a la fecha inicial
+                //return -1 cuando la fecha inicial es mayor a la fecha final
+                var offset = new Date().getTimezoneOffset();
+                var final = new Date(final.split('-')[2],final.split('-')[1] - 1,final.split('-')[0]);
+                var inicial = new Date(inicial.split('-')[2],inicial.split('-')[1] - 1,inicial.split('-')[0]);
+                if(final.getYear() == inicial.getYear()){
+                    if(final.getMonth() == inicial.getMonth()){
+                        if(final.getDate() == inicial.getDate()){
+                            return 0;
+                        }else if(final.getDate() > inicial.getDate()){ //dia final es mayor
+                            return 1;
+                        }else{ //dia inicial es mayor
+                            return -1;
+                        }
+                    }else if(final.getMonth() > inicial.getMonth()){ //mes final es mayor
+                        return 1;
+                    }else{ //mes inicial es mayor
+                        return -1;
+                    }
+                }else if(final.getYear()>inicial.getYear()){ //anio final es mayor
+                    return 1;
+                }else{ //anio inicial es mayor
+                    return -1;
+                }
+             };
+            validellista1 = function(id){
+               var ban = true;
+               for(i=0;i<lista_items1.length;i++){
+                   if(lista_items1[i].iddocente == id){
+                       if(lista_items1[i].action!="del"){
+                           ban = false;
+                           break;
+                       }
+                   }
+               }
+               return ban;
+            };
+            validellista2 = function(idfacultad){
+                var ban = false;
+                for(i=0; i<lista_items2.length;i++){
+                    if(lista_items2[i].idfacultad==idfacultad){
+                        if(lista_items2[i].action != "del"){
+                            for(j=0;j<lista_items2[i].carreras.length;j++){
+                                if(lista_items2[i].carreras[j].action != "del"){
+                                    ban = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                return ban;
+            };
+            valilistas = function(){
+                var ban = false;
+                for(i=0;i<lista_items1.length;i++){
+                    if(lista_items1[i].action != "del"){
+                        ban = true;
+                        break;
+                    }
+                }
+                if(ban) $('[name="valilista1"]').val('1'); else $('[name="valilista1"]').val('0');
+                ban = false;
+                for(i=0;i<lista_items2.length;i++){
+                    if(lista_items2[i].action != "del"){
+                        for(j=0;j<lista_items2[i].carreras.length;j++){
+                            if(lista_items2[i].carreras[j].action != "del") ban =  true;
+                        }
+                        if(ban) break;
+                    }
+                }
+                if(ban) $('[name="valilista2"]').val('1'); else $('[name="valilista2"]').val('0');
+            };
+            valifaclista2 = function(id){
+                var ban = true;
+                for(i=0;i<lista_items2.length;i++){
+                    if(lista_items2[i].idfacultad == id && lista_items2[i].action != "del"){
+                        ban = false;
+                        break;
+                    }
+                }
+                return ban;
+            };
+            valicarlista2 = function(id, carrera){
+                var ban = true;
+                for(i=0;i<lista_items2.length;i++){
+                    if(lista_items2[i].idfacultad == id){
+                        for(j=0;j<lista_items2[i].carreras.length;j++){
+                            if(lista_items2[i].carreras[j].idcarrera==carrera && lista_items2[i].carreras[j].action != "del"){
+                                ban = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+                return ban;
+            };
+            valirangofechas = function(){
+              var fechainicio = $('.fechainicio').val();
+              var fechafin = $('.fechafin').val();
+              var fechainiciocord = $('.fechainiciocord').val();
+              var fechafincord = $('.fechafincord').val();
+              if(valifecha(fechafin,fechainicio)!= -1){
+                  if(valifecha(fechafincord,fechainiciocord)!= -1){
+                      if(valifecha(fechainiciocord,fechainicio) != -1 && valifecha(fechafin,fechainiciocord) != -1){
+                          if(valifecha(fechafincord,fechainicio)!= -1 && valifecha(fechafin,fechafincord) != -1){
+                              return true;
+                          }else{
+                              smoke.alert('Verificar que la fecha para coordinadores se encuentre en el rango de fecha del cronograma');
+                              return false;
+                          }
+                      }else{
+                          smoke.alert('Verificar que la fecha para coordinadores se encuentre en el rango de fecha del cronograma');
+                          return false;
+                      }
+                  }else{
+                      smoke.alert('El rango de fechas para coordinadores es incorrecto');
+                      return false;
+
+                  }
+              }else{
+                  smoke.alert('El rango de fechas para la planifición es incorrecto');
+                  return false;
+              }
+            };
+            actualizar_lista1 = function(){
+                $('#tbody0').html('');
+                var style = "";
+                var checked = "";
+                for(i=0;i<lista_items1.length;i++){
+                    if(lista_items1[i].action == "del") style = "display:none";
+                    else style = "";
+                    if(lista_items1[i].activoc == "1") checked = '<i class="fa fa-check"></i>';
+                    else checked = '<i class="fa fa-close"></i>';
+                    $('#tbody0').append('<tr style="'+style+'" iddocente="'+lista_items1[i].iddocente+'"><td>'+lista_items1[i].docente+'</td><td>'+lista_items1[i].formato+'</td><td style="text-align:center">'+lista_items1[i].inicio+'</td><td style="text-align:center">'+lista_items1[i].fin+'</td><td style="text-align:center">'+lista_items1[i].bateria+'</td><td style="text-align:center">'+checked+'</td><td style="text-align:center"><button class="btn btn-warning btn-mini" onclick="editar(this)" tipo="general" iddoc="'+lista_items1[0].iddocente+'" ><i class="fa fa-edit"></i></button><b> </b><button class="btn btn-danger btn-mini" onclick="eliminar(this)" tipo="general" iddoc="'+lista_items1[i].iddocente+'" ><i class="fa fa-remove"></i></button></td></tr>');
+                }
+                valilistas();
+            };
+            actualizar_lista2 = function(){
+                $('#tbody1').html('');
+                for(i=0;i<lista_items2.length;i++){
+                    var style="";
+                    if(lista_items2[i].action == "del") style = "display: none;";
+                    for(j=0;j<lista_items2[i].carreras.length;j++){
+                        if(lista_items2[i].carreras[j].action=="del") style = "display: none;";
+                        $('#tbody1').append('<tr style="'+style+'" idfacultad="'+lista_items2[i].idfacultad+'" facultad="'+lista_items2[i].facultad+'" idcarrera="'+lista_items2[i].carreras[j].idcarrera+'" carrera="'+lista_items2[i].carreras[j].carrera+'" idtipocarrera="'+lista_items2[i].carreras[j].idtipocarrera+'" tipocarrera="'+lista_items2[i].carreras[j].tipocarrera+'"><td>'+lista_items2[i].facultad+'</td><td>'+lista_items2[i].carreras[j].carrera+'</td><td>'+lista_items2[i].carreras[j].tipocarrera+'</td><td style="text-align:center"><button class="btn btn-danger btn-mini" onclick="eliminar(this)" tipo="especifico" idfacultad="'+lista_items2[i].idfacultad+'" idcarrera="'+lista_items2[i].carreras[j].idcarrera+'"><i class="fa fa-remove"></i></button></td></tr>');
+                    }
+
+                }
+                valilistas();
+            };
+            $('.tipo').on('change', function () {
+                var idf = $(this).attr('idf');
+                var ch = $(this).attr('checked');
+                if(ch=='checked'){
+                    ch = 1;
+                }else{
+                    ch = 0;
+                }
+                for(i=0;i<lista_items3.length;i++){
+                    if(lista_items3[i].idformato==idf){
+                        lista_items3[i].activo = ch;
+                    }
+                }
+                valiformato();
+            });
+            $('.add_general').click(function () {
+                $('#trgeneral').removeAttr('style');
+                $('#tipo').val('general');
+                $('#idasignacion').val('');
+                $('#activoc').attr('checked','checked');
+                var bateria = $('.valibateria').val();
+                if(bateria != ""){
+                    if(bateria > 0){
+                        if(valirangofechas()){
+                            $('#inicioc').val($('.fechainiciocord').val());
+                            $('#finc').val($('.fechafincord').val());
+                            $('#bateria').val($('.valibateria').val());
+                            $('#ModalGeneral').modal('show');
+                        }
+                    }else{
+                           smoke.alert('El tamaño de la bateria debe ser mayor a 0');
+                    }
+                }else{
+                    smoke.alert('Ingresar el tamaño de la bateria');
+                }
+            });
+            $('.add_especifico').click(function () {
+                $('#ModalEspecifico').modal('show');
+            });
+            $('#add_asignacion').click(function () {
+                var tipo = $('#tipo').val();
+                var idformato = $('#formatoc').val().split(';')[0];
+                var formato = $('#formatoc').val().split(';')[1];
+                var inicio = $('#inicioc').val();
+                var fin = $('#finc').val();
+                var bateria = $('#bateria').val();
+                var activoc = $('#activoc').attr('checked');
+                var b1 = valifecha(inicio, $('.fechainicio').val());
+                var b21 = valifecha(inicio, $('.fechafin').val());
+                var c1 = valifecha(fin, $('.fechainicio').val());
+                var c21 = valifecha(fin, $('.fechafin').val());
+                var ban = valifecha(fin, inicio);
+                if(activoc == 'checked') activoc = "1";
+                else activoc = "0";
+                var iddocente = $('#idgeneral').val().split(';')[0];
+                var docente = $('#idgeneral').val().split(';')[1];
+                if(iddocente != "0" && idformato!= "0" && bateria!= ""){
+                    if(b1 != -1 && b21!= 1 && c1!= -1 && c21 !=1 && ban != -1){
+                        if(ban!=-1){
+                            if(tipo=="general"){
+                               if(validellista1(iddocente)){
+                                    if(lista_items1.length == 0){
+                                        lista_items1 = [{action: "add", iddocente: iddocente, docente: docente, idformato: idformato, formato: formato, inicio:inicio, fin: fin, bateria: bateria, activoc: activoc}];
+                                    }else{
+                                        lista_items1.push({action: "add", iddocente: iddocente, docente: docente, idformato: idformato, formato: formato, inicio:inicio, fin: fin, bateria: bateria, activoc: activoc})
+                                    }
+                                    console.log(lista_items1);
+                                    actualizar_lista1();
+                                }else{
+                                    smoke.alert('Ya existe una asignación para ese docente');
+                                }
+                            }else{
+                                if(tipo=="editgeneral"){
+                                    var idasignacion = $('#idasignacion').val();
+                                    var ban = true;
+                                    if(idasignacion != iddocente){
+                                        ban = validellista1(iddocente);
+                                    }
+                                    if(ban){
+                                        for(i=0;i<lista_items1.length;i++){
+                                            if(lista_items1[i].iddocente == idasignacion){
+                                                if(lista_items1[i].action != "add") lista_items1[i].action = "edit";
+                                                lista_items1[i].iddocente = iddocente;
+                                                lista_items1[i].docente = docente;
+                                                lista_items1[i].idformato = idformato;
+                                                lista_items1[i].formato = formato;
+                                                lista_items1[i].inicio = inicio;
+                                                lista_items1[i].fin = fin;
+                                                lista_items1[i].bateria = bateria;
+                                                lista_items1[i].activoc = activoc;
+                                            }
+                                        }
+                                        actualizar_lista1();
+                                    }else{
+                                        smoke.alert('Ya existe una asignación para ese docente')
+                                    }
+
+                                }
+                            }
+                        }else{
+                            smoke.alert('Rango de fechas erroneo');
+                        }
+                    }else{
+                        smoke.alert('Rango de fechas erroneo');
+                    }
+                }else{
+                    smoke.alert('Campos incompletos');
+                }
+                $("#cerrar").click();
+                limpiarModalGeneral();
+                valilistas();
+            });
+            $('#add_asignacionesp').click(function () {
+               var idfacultad = $('#idfacultad').val().split(';')[0];
+               var facultad = $('#idfacultad').val().split(';')[1];
+               var carreras = $('#idcarrera').val();
+               var idtipocarrera = $('#idtipocarrera').val().split(';')[0];
+               var tipocarrera = $('#idtipocarrera').val().split(';')[1];
+               if(idfacultad!="" && carreras != null && idtipocarrera!=undefined && tipocarrera != undefined && carreras != "----------"){
+                   if(valifaclista2(idfacultad)){
+                       if(lista_items2.length == 0){//No existe
+                           lista_items2 = [{action: "add", idfacultad: idfacultad, facultad: facultad, carreras: []}];
+                       }else{//Si existe
+                           lista_items2.push({action: "add", idfacultad: idfacultad, facultad: facultad, carreras: []})
+                       }
+                   }
+                   for(c=0;c<carreras.length;c++){
+                       var idcarrera = carreras[c].split(';')[0];
+                       var carrera = carreras[c].split(';')[1];
+                       if(idcarrera != undefined && carrera != undefined){
+                           if(valicarlista2(idfacultad, idcarrera)){
+                               for(i=0;i<lista_items2.length;i++){
+                                   if(lista_items2[i].idfacultad == idfacultad){
+                                       if(lista_items2[i].carreras.length == 0){
+                                           lista_items2[i].carreras = [{action: "add", idcarrera: idcarrera, carrera: carrera, idtipocarrera: idtipocarrera, tipocarrera: tipocarrera, asignaciones: []}];
+                                       }else{
+                                           lista_items2[i].carreras.push({action: "add", idcarrera: idcarrera, carrera: carrera, idtipocarrera: idtipocarrera, tipocarrera: tipocarrera, asignaciones: []});
+                                       }
+                                   }
+                               }
+                           }
+                       }
+                   }
+                   console.log(lista_items2);
+                   $('#ModalEspecifico').modal('hide');
+                   actualizar_lista2();
+                   limpiarModalEspecifico();
+                   valilistas();
+               }
+            });
+            editar = function (e) {
+                var tipo = $(e).attr('tipo');
+                if(tipo=="general"){
+                   var iddocente = $(e).attr('iddoc');
+                   for(i=0;i<lista_items1.length;i++){
+                       if(lista_items1[i].iddocente == iddocente && lista_items1[i].action != "del"){
+                           $('#idgeneral').val(lista_items1[i].iddocente+";"+lista_items1[i].docente);
+                           $('#select2-idgeneral-container').attr('title',lista_items1[i].docente);
+                           $('#select2-idgeneral-container').text(lista_items1[i].docente);
+                           $('#formatoc').val(lista_items1[i].idformato+";"+lista_items1[i].formato);
+                           $('#select2-formatoc-container').attr('title',lista_items1[i].formato);
+                           $('#select2-formatoc-container').text(lista_items1[i].formato);
+                           $('#inicioc').val(lista_items1[i].inicio);
+                           $('#finc').val(lista_items1[i].fin);
+                           $('#bateria').val(lista_items1[i].bateria);
+                           $('#tipo').val('editgeneral');
+                           if(lista_items1[i].activoc == "1"){
+                                $('#activoc').attr('checked', 'checked');
+                           }else{
+                                $('#activoc').removeAttr('checked');
+                           }
+                           $('#idasignacion').val(lista_items1[i].iddocente);
+                           $('#ModalGeneral').modal('show');
+                       }
+                   }
+
+                }else{
+
+                }
+            };
+            eliminar = function (e) {
+                var tipo = $(e).attr('tipo');
+                if(tipo == "general"){
+                     var iddocente = $(e).attr('iddoc');
+                    for(i=0;i<lista_items1.length;i++){
+                        if(lista_items1[i].iddocente==iddocente && lista_items1[i].action != "del"){
+                            if(lista_items1[i].action == "add"){
+                                lista_items1.splice(i,1);
+                            }else{
+                                lista_items1[i].action = "del";
+                            }
+                        }
+                    }
+                    actualizar_lista1();
+                }else{
+                    if(tipo == "especifico"){
+                        var idfacultad = $(e).attr('idfacultad');
+                        var idcarrera = $(e).attr('idcarrera');
+                        var index=0;
+                        var ban = true;
+                        for(i=0;i<lista_items2.length;i++){
+                            index=i;
+                            if(lista_items2[i].idfacultad==idfacultad){
+                                for(j=0;j<lista_items2[i].carreras.length;j++){
+                                    if(lista_items2[i].carreras[j].idcarrera ==idcarrera){
+                                        if(lista_items2[i].carreras.length == 1){
+                                            if(lista_items2[i].carreras[j].action == "add"){
+                                                lista_items2.splice(i,1);
+                                                ban = false;
+                                                break;
+                                            }
+                                            else{
+                                                lista_items2[i].carreras[j].action = "del";
+                                            }
+                                        }else{
+                                            if(lista_items2[i].carreras[j].action == "add"){
+                                                lista_items2[i].carreras.splice(j,1);
+                                            }else{
+                                                lista_items2[i].carreras[j].action = "del";
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if(lista_items2.length!=0 && ban!= false){
+                                if(validellista2(idfacultad)==false){
+                                    lista_items2[index].action = "del";
+                                }
+                            }
+                        }
+                        actualizar_lista2();
+
+                    }
+                }
+                valilistas();
+            };
+        });
+    </script>
+{% endblock %}
+{% block titulo %}{{ title }}{% endblock %}
+{% block formadicional %}
+    <table class="table table-bordered table-hover">
+            <thead>
+                 <tr>
+                    <th colspan="10">FORMATOS DE REACTIVOS</th>
+                </tr>
+                <tr>
+                    <th>
+                        Nombre
+                    </th>
+                    <th>
+                        Tipo de reactivo
+                    </th>
+                    <th style="width: 10%; text-align: center">
+                        Seleccionar
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in formatos %}
+                    <tr>
+                        <td>{{t}}</td>
+                        <td>{{t.tiporeactivo}}</td>
+                        <td style="text-align: center"><input type="checkbox" checked class="tipo" idf="{{ t.id }}"></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    <table class="table table-bordered table-hover">
+            <thead>
+                 <tr>
+                    <th colspan="10">ASIGNACIÓN DE REACTIVOS GENERALES <a class="btn btn-mini btn-success pull-right add_general"><i class="fa fa-plus"></i> Adicionar</a></th>
+                </tr>
+                <tr>
+                    <th>
+                        Docente
+                    </th>
+                    <th>
+                        Formato
+                    </th>
+                    <th style="width: 15%; text-align: center">
+                        Inicio
+                    </th>
+                    <th style="width: 15%; text-align: center">
+                        Fin
+                    </th>
+                    <th style="width: 10%; text-align: center">
+                        Bateria
+                    </th>
+                    <th style="width: 10%; text-align: center">
+                        Asignar reactivos
+                    </th>
+                    <th style="width: 10%; text-align: center">
+                        Ajustes
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="tbody0">
+
+            </tbody>
+        </table>
+    <table class="table table-bordered table-hover" id="tablaAtributo">
+            <thead>
+                 <tr>
+                    <th colspan="10">ASIGNACIÓN DE REACTIVOS ESPECÍFICOS - CARRERAS  <a class="btn btn-mini btn-success pull-right add_especifico"><i class="fa fa-plus"></i> Adicionar</a></th>
+                </tr>
+                <tr>
+                    <th>Facultad</th>
+                    <th>Carrera</th>
+                    <th>Tipo de bateria</th>
+                    <th style="text-align: center;">Ajustes</th>
+                </tr>
+            </thead>
+            <tbody id="tbody1">
+
+            </tbody>
+        </table>
+    <div class="modal hide fade static in" id="ModalEspecifico">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h3>Asignación</h3>
+            </div>
+            <div class="modal-body">
+                <table class="table" style="border: none">
+                    <thead>
+                    <tr>
+                        <td><b>Facultad: </b></td>
+                        <td style="width: 80%;">
+                            <select id="idfacultad" style="width: 100%" class="facultad activaselect">
+                                <option value="">----------</option>
+                                {% for f in facultades %}
+                                    <option value="{{ f.id }};{{ f }}">{{ f }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><b>Carrera: </b></td>
+                        <td style="width: 80%;">
+                            <select id="idcarrera" style="width: 100%" class="carrera activaselect" multiple="multiple">
+                                <option value="0">----------</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><b>Tipo: </b></td>
+                        <td style="width: 80%;">
+                            <select id="idtipocarrera" style="width: 100%" class="tipocarrera">
+                                <option>----------</option>
+                                <option value="carrera;CARRERA">CARRERA</option>
+                                <option value="malla;MALLA">MALLA</option>
+                            </select>
+                        </td>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="btn btn-success" id="add_asignacionesp">Agregar</a>
+                <a href="#" class="btn btn-danger" id="cerrar2">Cerrar</a>
+            </div>
+        </div>
+    </div>
+    <div class="modal hide fade static in" id="ModalGeneral">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h3>Asignación</h3>
+            </div>
+            <div class="modal-body">
+                <table class="table" style="border: none">
+                    <thead>
+                    <tr id="trgeneral">
+                        <td><b>Docente: </b></td>
+                        <td style="width: 80%;">
+                            <select style="width: 100%" id="idgeneral" class="activaselect">
+                            <option value="0">----------</option>
+                                {% for d in docentes %}
+                                    <option value="{{ d.id }};{{ d }}">{{ d }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><b>Formato de reactivo: </b></td>
+                        <td style="width: 80%;">
+                            <select style="width: 100%" id="formatoc">
+                                <option value="0">------</option>
+                                {% for d in formatos %}
+                                    <option value="{{ d.id }};{{ d }}">{{ d }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><b>Inicio</b></td>
+                        <td style="width: 80%;">
+                            <input class="datetimepicker" type="text" style="width: 100%;" id="inicioc">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><b>Fin</b></td>
+                        <td style="width: 80%;">
+                            <input class="datetimepicker" type="text" style="width: 100%;" id="finc">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><b>Bateria</b></td>
+                        <td style="width: 80%;">
+                            <input type="text" style="width: 100%;" id="bateria">
+                            <input type="hidden" style="width: 100%;" id="tipo">
+                            <input type="hidden" style="width: 100%;" id="idasignacion">
+                            <input type="hidden" style="width: 100%;" id="tipoespecifico">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><b>Asignar docentes</b></td>
+                        <td><input type="checkbox" id="activoc"></td>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="btn btn-success" id="add_asignacion">Agregar</a>
+                <a href="#" class="btn btn-danger" id="cerrar">Cerrar</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block formaction %}/adm_configuracioncomplexivo{% endblock %}
+{% block formdestination %}/adm_configuracioncomplexivo?action=adm_cronogramaplanificacion{% endblock %}
+{% block formextra %}
+    <input type='hidden' name='action' value='add_cronogramaplanificacion'/>
+    <input type='hidden' name='valiperiodo' value="0"/>
+    <input type='hidden' name='valiformato' value=''/>
+    <input type='hidden' name='valilista1' value=''/>
+    <input type='hidden' name='valilista2' value=''/>
+{% endblock %}
+{% block formback %}/adm_configuracioncomplexivo?action=adm_cronogramaplanificacion{% endblock %}
+{% block buttonname %}Guardar{% endblock %}

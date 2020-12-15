@@ -1,0 +1,47 @@
+{% extends "ajaxformbase.html" %}
+{% block extraheading %}
+{% endblock %}
+{% block titulo %}
+    <h5>{{ title }}</h5>
+    <h5>{{ bateria.carrera.carrera }}{% if bateria.malla %} - {{ bateria.malla.malla }}{% endif %}</h5>
+{% endblock %}
+{% block formaction %}/adm_configuracioncomplexivo{% endblock %}
+{% block formdestination %}/adm_configuracioncomplexivo?action=adm_validarbateriaexamen{% endblock %}
+{% block formback %}/adm_configuracioncomplexivo?action=adm_validarbateriaexamen{% endblock %}
+{% block formextra %}
+    <div class="row-fluid">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th colspan="12" style="text-align: center;">Reactivos generales</th>
+                </tr>
+                <tr>
+                    <th style="width: 50%;">Área</th>
+                    <th style="text-align: center;">Cantidad</th>
+                    <th style="text-align: center;">Detalles</th>
+                    <th style="text-align: center;">Selección <input type="checkbox" class="activagenerales"></th>
+                </tr>
+            </thead>
+            <tbody id="tbodygeneral">
+
+            </tbody>
+        </table>
+    </div><div class="row-fluid">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th colspan="12" style="text-align: center;">Reactivos específicos</th>
+                </tr>
+                <tr>
+                    <th style="width: 50%;">Asignatura</th>
+                    <th style="text-align: center;">Cantidad</th>
+                    <th style="text-align: center;">Detalles</th>
+                    <th style="text-align: center;">Selección <input type="checkbox" class="activaespecificos"></th>
+                </tr>
+            </thead>
+            <tbody id="tbodyespecifico">
+
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

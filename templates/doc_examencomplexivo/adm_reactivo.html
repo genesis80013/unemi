@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block heading %}
+{% endblock %}
+{% block contenidopanel %}
+    <div class="row-fluid">
+        <div class="span12">
+            <h3>{{ title }}</h3>
+        </div>
+    </div>
+    <div class="container-fluid table-responsive">
+        <table class="table table-striped table-bordered" valign="middle">
+            <tbody><tr class="">
+                <th style="text-align: center;">
+                    <select id="periodos" style="width: 100%" tabindex="-1" class="select2-hidden-accessible" aria-hidden="true">
+                    {% for p in periodos %}
+                        <option value="{{ p.id }}">{{ p }}</option>
+                    {% endfor %}
+                    </select>
+                </th>
+                </tr>
+            </tbody>
+        </table>
+    {% if valigeneral %}
+        <table class="table table-bordered table-hover"  id="valigeneral">
+            <thead>
+                <tr><th colspan="14">Reactivos Generales</th></tr>
+                <tr>
+                    <th>Formato</th>
+                    <th>Docente</th>
+                    <th>Area</th>
+                    <th style="text-align: center;">Inicio</th>
+                    <th style="text-align: center;">fin</th>
+                    <th style="text-align: center;">Cantidad</th>
+                    <th style="text-align: center;">Totales</th>
+                    <th style="text-align: center;">Estado</th>
+                    <th style="text-align: center;">Revisión</th>
+                    <th style="text-align: center;">Observaciones</th>
+                    <th style="text-align: center;">Info</th>
+                    <th style="text-align: center;">Ajustes</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for p in generales %}
+                <tr>
+                    <td>{{ p.fila.formato.formatoreactivo }}</td>
+                    <td>{{ p.fila.persona }}</td>
+                    <td>{{ p.fila.area }}</td>
+                    <td style="text-align: center">{{ p.fila.inicio|date:'d-m-Y' }}</td>
+                    <td style="text-align: center">{{ p.fila.fin|date:'d-m-Y' }}</td>
+                    <td style="text-align: center">{{ p.fila.cantidad }}</td>
+                    <td style="text-align: center">{{ p.count }}</td>
+                    <td style="text-align: center">{% if p.fila.estadofinal %}<i class="fa fa-check"></i>{% else %}<i class="fa fa-close"></i>{% endif %}</td>
+                    <td style="text-align: center">{% if p.fila.revision %}<i class="fa fa-check"></i>{% else %}<i class="fa fa-close"></i>{% endif %}</td>
+                    <td style="text-align: center">{% if p.observaciones > 0 %}<span class="alert alert-warning"><i class="fa fa-close"></i> Revisar</span>{% endif %}</td>
+                    <td style="text-align: center;">
+                        <a href="/doc_configuracioncomplexivo?action=adm_detallereactivo&id={{ p.fila.id }}" class="btn btn-warning btn-mini tu" title="Reactivos"><i class="fa fa-info-circle"></i></a>
+                    </td>
+                    <td style="text-align: center">
+
+                    {% if p.vali %}
+                        <a href="/doc_configuracioncomplexivo?action=add_reactivodocente&id={{ p.fila.id }}" class="btn btn-success btn-mini tu" title="Editar"><i class="fa fa-edit"></i></a>
+                    {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+    {% if valiespecifico %}
+        <table class="table table-bordered table-hover"  id="valigeneral">
+            <thead>
+                <tr><th colspan="14">Reactivos Específicos</th></tr>
+                <tr>
+                    <th>Formato</th>
+                    <th>Malla</th>
+                    <th>Asignatura</th>
+                    <th>Docente</th>
+                    <th style="text-align: center;">Inicio</th>
+                    <th style="text-align: center;">fin</th>
+                    <th style="text-align: center;">Cantidad</th>
+                    <th style="text-align: center;">Totales</th>
+                    <th style="text-align: center;">Estado</th>
+                    <th style="text-align: center;">Revisión</th>
+                    <th style="text-align: center;">Observaciones</th>
+                    <th style="text-align: center;">Info</th>
+                    <th style="text-align: center;">Ajustes</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for p in especificos %}
+                <tr>
+                    <td>{{ p.fila.formato.formatoreactivo }}</td>
+                    <td style="width: 10%">{{ p.fila.asignatura.malla }}</td>
+                    <td>{{ p.fila.asignatura.asignatura }}</td>
+                    <td style="width: 20%">{{ p.fila.docente}}</td>
+                    <td style="text-align: center; width: 10%;">{{ p.fila.inicio|date:'d-m-Y' }}</td>
+                    <td style="text-align: center; width: 10%;">{{ p.fila.fin|date:'d-m-Y' }}</td>
+                    <td style="text-align: center; width: 5%;">{{ p.fila.cantidad }}</td>
+                    <td style="text-align: center; width: 5%;">{{ p.count }}</td>
+                    <td style="text-align: center; width: 5%;">{% if p.fila.estadofinal %}<i class="fa fa-check"></i>{% else %}<i class="fa fa-close"></i>{% endif %}</td>
+                    <td style="text-align: center; width: 5%;">{% if p.fila.revision %}<i class="fa fa-check"></i>{% else %}<i class="fa fa-close"></i>{% endif %}</td>
+                    <td style="text-align: center; width: 5%;">{% if p.fila.observaciones > 0 %}<span class="alert alert-warning"><i class="fa fa-close"></i> Revisar</span>{% endif %}</td>
+                    <td style="text-align: center;">
+                        <a href="/doc_configuracioncomplexivo?action=adm_detallereactivo&id={{ p.fila.id }}" class="btn btn-warning btn-mini tu" title="Reactivos"><i class="fa fa-info-circle"></i></a>
+                    </td>
+                    <td style="text-align: center; width: 5%;">
+                    {% if p.vali %}
+                        <a href="/doc_configuracioncomplexivo?action=add_reactivodocente&id={{ p.fila.id }}" class="btn btn-success btn-mini tu" title="Editar"><i class="fa fa-edit"></i></a>
+                    {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+    </div>
+{% endblock %}

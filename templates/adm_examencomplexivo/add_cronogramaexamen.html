@@ -1,0 +1,503 @@
+{% extends "ajaxformbase.html" %}
+{% block extraheading %}
+    <script type="text/javascript">
+        $(function() {
+            lista_items1 = [];
+            var act = "add";
+            var idact=0;
+            $("#id_nombre").addClass("validate[required]");
+            $('.planificacionid').on('change', function () {
+                var id = $(this).val();
+                if(id!=""){
+
+                    $('.carreraid').val('');
+                    $('.carreraid').html('');
+                    $('#select2-id_carrera-container').attr('title','---------------');
+                    $('#select2-id_carrera-container').text('---------------');
+                    var formdata = new FormData();
+                    formdata.append('action','listar_cronogramacarreras');
+                    formdata.append('idcronograma',id)
+                    $.ajax({
+                        type: "POST",
+                        url: "/adm_configuracioncomplexivo",
+                        data: formdata,
+                        success: function(data) {
+                            $('.carreraid').html('<option value="">--------------------</option>');
+                            if (data.result == 'ok') {
+                                for(detalle in data.mensaje){
+                                    $('.carreraid').append('<option value="'+data.mensaje[detalle]['id']+'">'+data.mensaje[detalle]['carrera__nombre']+'</option>');
+                                }
+                            } else {
+                                if (data.result == 'session') {
+                                    location.href='/';
+                                }else{
+                                    smoke.alert(data.mensaje);
+                                }
+                            }
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(thrownError);
+                        },
+                        dataType: "json",
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    });
+                }else{
+                    $('.carreraid').val('');
+                    $('.carreraid').html('');
+                    $('#select2-id_carrera-container').attr('title','---------------');
+                    $('#select2-id_carrera-container').text('---------------');
+                }
+            });
+            valilista = function(){
+                var ban = 0;
+                for(i=0; i<lista_items1.length; i++){
+                    if(lista_items1[i].action != "del"){
+                        ban = 1;
+                        break;
+                    }
+                }
+                if(ban == 0){
+                    $('#valiaction').val('0');
+                }else{
+                    $('#valiaction').val('1');
+                }
+            };
+            actualizar_lista = function(){
+                $('#tbgrupos').html('');
+                for(i=0; i<lista_items1.length; i++){
+                    lista_items1[i].index = i+1;
+                    inicio = lista_items1[i].inicio;
+                    fin = lista_items1[i].fin;
+                    texto = "No";
+                    minuto = "";
+                    if(lista_items1[i].tiempo != null) minuto = lista_items1[i].tiempo;
+                    if(lista_items1[i].activo == true){
+                        texto = "Sí";
+                    }
+                    $('#tbgrupos').append('<tr>' +
+                        '<td>' +
+                        '<label><b>Nombre: </b>'+lista_items1[i].nombre.toUpperCase()+'</label>' +
+                        '<label><b>Aula: </b>'+lista_items1[i].aula+'</label>' +
+                        '<label><b>N° reactivos: </b>'+lista_items1[i].cantidad+'</label>' +
+                        '<label><b>N° tipo de examen: </b>'+lista_items1[i].tipoexamen+'</label>' +
+                        '<td>'+inicio+' - '+fin+'</td>' +
+                        '<td>'+minuto+'</td>' +
+                        '<td>'+lista_items1[i].notamin+'</td>' +
+                        '<td>'+lista_items1[i].notamax+'</td>' +
+                        '<td style="text-align: center;">'+texto+'</td>' +
+                        '<td style="text-align: center;"><button class="btn btn-mini btn-warning" idtr="'+lista_items1[i].index+'" onclick="editGrupo(this)"><i class="fa fa-edit"></i></button> <b> </b> <button class="btn btn-mini btn-danger" idtr="'+lista_items1[i].index+'" onclick="eliminarGrupo(this)"><i class="fa fa-close"></i></button></td></tr>');
+                }
+                valilista();
+            };
+            cargar = function () {
+                $('.inicio').val('');
+                $('.fin').val('');
+                actualizar_lista();
+            };
+            window.onloadend = cargar();
+            $('.tipoexamen').change(function () {
+                var id = $(this).val();
+                if(id=="3"){
+                    $('.valitiempo').addClass('validate[required,custom[onlyNumberSp],min[1]]');
+                    $('.valitiempo').removeAttr('disabled','disabled');
+
+                }else{
+                    $('.valitiempo').removeClass('validate[required,custom[onlyNumberSp],min[1]]');
+                    $('.valitiempo').attr('disabled','disabled');
+                    $('.valitiempo').val('');
+                }
+            });
+            addGrupo = function () {
+                $('#myModal').modal({'width':'800'}).modal('show');
+                $("#formgrupo").validationEngine({autoHidePrompt:true, autoHideDelay:1000 });
+                $('.valitiempo').attr('disabled','disabled');
+            };
+            editGrupo  = function(t){
+                var id=$(t).attr('idtr');
+                for(i=0; i<lista_items1.length; i++){
+                    if(lista_items1[i].index == id){
+                        $('#id_grupo').val(lista_items1[i].nombre);
+                        $('#id_aula').val(lista_items1[i].aula);
+                        $('#id_inicio').val(lista_items1[i].inicio);
+                        $('#id_fin').val(lista_items1[i].fin);
+                        $('#id_cantidad').val(lista_items1[i].cantidad);
+                        $('#id_tipo').val(lista_items1[i].idtipoexamen);
+                        $('#select2-id_tipo-container').text(lista_items1[i].tipoexamen);
+                        $('#select2-id_tipo-container').attr('title',lista_items1[i].tipoexamen);
+                        if(lista_items1[i].idtipoexamen == "3"){
+                            $('#id_minutos').val(lista_items1[i].tiempo);
+                        }
+                        $('#id_notamin').val(lista_items1[i].notamin);
+                        $('#id_notamax').val(lista_items1[i].notamax);
+                        if(lista_items1[i].activo == true){
+                            $('#id_activo').attr('checked', 'checked');
+                        }else{
+                            $('#id_activo').removeAttr('checked');
+                        }
+                        idact = id;
+                        act = "edit";
+                    }
+                }
+                $('#myModal').modal({'width':'800'}).modal('show');
+                $("#formgrupo").validationEngine({autoHidePrompt:true, autoHideDelay:1000 });
+            };
+            eliminarGrupo = function(t){
+                var id = parseInt($(t).attr('idtr'));
+                var index = null;
+                for(i=0; i<lista_items1.length; i++){
+                    if(lista_items1[i].index == id && lista_items1[i].action != "add"){
+                        lista_items1[i].index = "del";
+                        break;
+                    }else{
+                        if(lista_items1[i].index == id && lista_items1[i].action == "add"){
+                            index = i;
+                            break;
+                        }
+                    }
+                }
+                if(index != null){
+                    lista_items1.splice(index,1);
+                }
+                actualizar_lista();
+            };
+            limpiarmodalgrupo = function(){
+                $('#id_grupo').val('');
+                $('#id_aula').val('');
+                $('#id_inicio').val('');
+                $('#id_fin').val('');
+                $('#id_tipo').val('1');
+                $('#id_minutos').val('');
+                $('#id_cantidad').val('');
+                $('#id_notamin').val('');
+                $('#id_notamax').val('');
+                $('#id_activo').removeAttr('checked');
+            };
+            valihora = function(inicio, fin){
+                var ban = false;
+                if(fin.getHours() > inicio.getHours()){
+                    ban  = true;
+                }else{
+                    if(fin.getHours() == inicio.getHours()){
+                        if(fin.getMinutes()> inicio.getMinutes()){
+                            ban = true;
+                        }else{
+                            ban = false;
+                        }
+                    }else{
+                        ban = false;
+                    }
+                }
+                return ban;
+            };
+            editarGrupo = function(){
+                try{
+                    var nombre = $('#id_grupo').val();
+                    var aula = $('#id_aula').val();
+                    var inicio = $('#id_inicio').val();
+                    var fin = $('#id_fin').val();
+                    var tipoexamen = $('#id_tipo').val();
+                    var tiempo = $('#id_minutos').val();
+                    var cantidad = $('#id_cantidad').val();
+                    var notamin = $('#id_notamin').val();
+                    var notamax = $('#id_notamax').val();
+                    var activo = false;
+                    if($('#id_mostrar').attr('checked') == 'checked'){
+                        activo = true;
+                    }
+                    if(tipoexamen == "3" && tiempo == ""){
+                        //mostrar el error
+                        smoke.alert('Ingresar los minutos que debe de tener cada pregunta');
+                    }else if(tipoexamen == "3" && parseInt(tiempo)< 1){
+                        //mostrar el error
+                        smoke.alert('Ingresar los minutos que debe de tener cada pregunta');
+                    }else{
+                        var actual = new Date();
+                        if(tipoexamen == "3"){
+                            var hora = parseInt(inicio.split(':')[0]);
+                            var minutos = parseInt(inicio.split(':')[1]);
+                            inicio = new Date(actual.getFullYear(), actual.getMonth(), actual.getDate(), hora, minutos);
+                            var minutoSumar  = parseInt(tiempo) * cantidad;
+                            fin = new Date(actual.getFullYear(), actual.getMonth(), actual.getDate(), hora, minutos);
+                            fin.setMinutes(inicio.getMinutes()+minutoSumar);
+                        }else{
+                            tiempo = null;
+                            var hora = parseInt(inicio.split(':')[0]);
+                            var minutos = parseInt(inicio.split(':')[1]);
+                            inicio = new Date(parseInt($('#id_fecha').val().split('-')[2]), parseInt($('#id_fecha').val().split('-')[1]), parseInt($('#id_fecha').val().split('-')[0]), hora, minutos);
+                            hora = parseInt(fin.split(':')[0]);
+                            minutos = parseInt(fin.split(':')[1]);
+                            fin = new Date(parseInt($('#id_fecha').val().split('-')[2]), parseInt($('#id_fecha').val().split('-')[1]), parseInt($('#id_fecha').val().split('-')[0]), hora, minutos);
+                        }
+                        if(valihora(inicio,fin)){
+                            for(i=0; i<lista_items1.length; i++){
+                                if(lista_items1[i].index == idact){
+                                    var hora = inicio.getHours();
+                                    var minutos = inicio.getMinutes();
+                                    if(hora<10){
+                                        hora = "0"+hora;
+                                    }
+                                    if(minutos<10){
+                                        minutos = "0"+minutos;
+                                    }
+                                    inicio = hora+":"+minutos;
+                                    hora = fin.getHours();
+                                    minutos = fin.getMinutes();
+                                    if(hora<10){
+                                        hora = "0"+hora;
+                                    }
+                                    if(minutos<10){
+                                        minutos = "0"+minutos;
+                                    }
+                                    fin = hora+":"+minutos;
+                                    lista_items1[i].nombre = nombre;
+                                    lista_items1[i].aula = aula;
+                                    lista_items1[i].inicio = inicio;
+                                    lista_items1[i].fin = fin;
+                                    lista_items1[i].tipoexamen = $('#select2-id_tipo-container').text();
+                                    lista_items1[i].idtipoexamen = tipoexamen;
+                                    lista_items1[i].tiempo = tiempo;
+                                    lista_items1[i].cantidad = cantidad;
+                                    lista_items1[i].notamin = notamin;
+                                    lista_items1[i].notamax = notamax;
+                                    lista_items1[i].activo = activo;
+                                }
+                            }
+                            act = "add";
+                            limpiarmodalgrupo();
+                            actualizar_lista();
+                            console.log(lista_items1);
+                        }else{
+                            smoke.alert('Ingresar fechas correctamente');
+                        }
+                    }
+                }catch (e) {
+                    smoke.alert('Error al ingresar los datos');
+                }
+
+            };
+            agregarGrupo = function(){
+                try{
+                    var nombre = $('#id_grupo').val();
+                    var aula = $('#id_aula').val();
+                    var inicio = $('#id_inicio').val();
+                    var fin = $('#id_fin').val();
+                    var tipoexamen = $('#id_tipo').val();
+                    var tiempo = $('#id_minutos').val();
+                    var cantidad = $('#id_cantidad').val();
+                    var notamin = $('#id_notamin').val();
+                    var notamax = $('#id_notamax').val();
+                    var activo = false;
+                    if($('#id_mostrar').attr('checked')=='checked') activo = true;
+                    if(tipoexamen == "3" && tiempo == ""){
+                        //mostrar el error
+                        smoke.alert('Ingresar los minutos que debe de tener cada pregunta');
+                    }else if(tipoexamen == "3" && parseInt(tiempo)< 1){
+                        //mostrar el error
+                        smoke.alert('Ingresar los minutos que debe de tener cada pregunta');
+                    }
+                    else{
+                        var actual = new Date();
+                        if(tipoexamen == "3"){
+                            var hora = parseInt(inicio.split(':')[0]);
+                            var minutos = parseInt(inicio.split(':')[1]);
+                            inicio = new Date(actual.getFullYear(), actual.getMonth(), actual.getDate(), hora, minutos);
+                            var minutoSumar  = parseInt(tiempo) * cantidad;
+                            fin = new Date(actual.getFullYear(), actual.getMonth(), actual.getDate(), hora, minutos);
+                            fin.setMinutes(inicio.getMinutes()+minutoSumar);
+                        }else{
+                            var hora = parseInt(inicio.split(':')[0]);
+                            var minutos = parseInt(inicio.split(':')[1]);
+                            inicio = new Date(parseInt($('#id_fecha').val().split('-')[2]), parseInt($('#id_fecha').val().split('-')[1]), parseInt($('#id_fecha').val().split('-')[0]), hora, minutos);
+                            hora = parseInt(fin.split(':')[0]);
+                            minutos = parseInt(fin.split(':')[1]);
+                            fin = new Date(parseInt($('#id_fecha').val().split('-')[2]), parseInt($('#id_fecha').val().split('-')[1]), parseInt($('#id_fecha').val().split('-')[0]), hora, minutos);
+                            tiempo=null;
+                        }
+                        if(valihora(inicio,fin)){
+                            var index = lista_items1.length + 1;
+                            var hora = inicio.getHours();
+                            var minutos = inicio.getMinutes();
+                            if(hora<10){
+                                hora = "0"+hora;
+                            }
+                            if(minutos<10){
+                                minutos = "0"+minutos;
+                            }
+                            inicio = hora+":"+minutos;
+                            hora = fin.getHours();
+                            minutos = fin.getMinutes();
+                            if(hora<10){
+                                hora = "0"+hora;
+                            }
+                            if(minutos<10){
+                                minutos = "0"+minutos;
+                            }
+                            fin = hora+":"+minutos;
+                            var item = {
+                                action: "add",
+                                index: index,
+                                idgrupo: null,
+                                nombre: nombre,
+                                aula: aula,
+                                inicio: inicio,
+                                fin: fin,
+                                idtipoexamen: tipoexamen,
+                                tipoexamen: $('#select2-id_tipo-container').text(),
+                                tiempo: tiempo,
+                                cantidad: cantidad,
+                                notamin: notamin,
+                                notamax: notamax,
+                                activo: activo,
+                                baterias: []
+                            };
+                            if(lista_items1.length == 0) lista_items1 = [item];
+                            else lista_items1.push(item);
+                            limpiarmodalgrupo();
+                            actualizar_lista();
+                            console.log(lista_items1);
+                        }else{
+                            smoke.alert('Ingresar fechas correctamente');
+                        }
+                    }
+                }catch (e) {
+                    smoke.alert('Error al ingresar los datos');
+                }
+            };
+            $('#cerrar').click(function () {
+                $('#formgrupo').validationEngine('detach');  // To remove the validationEngine
+                $('#myModal').modal('hide');
+                limpiarmodalgrupo();
+            });
+            $('#cerrarest').click(function () {
+                $('#formgrupoest').validationEngine('detach');  // To remove the validationEngine
+                $('#myModal2').modal('hide');
+            });
+            $('#agregar').click(function () {
+                var valid = $("#formgrupo").validationEngine('validate');
+                if(valid){
+                    //terminar proceso
+                    $('#formgrupo').validationEngine('detach');  // To remove the validationEngine
+                    $('#myModal').modal('hide');
+                    if(act=="add"){
+                        agregarGrupo();
+                    }else{
+                        editarGrupo();
+                    }
+                }else{
+                    console.log('error');
+                    setTimeout(function() {
+                        $('#formgrupo.help-text').each(function () {
+                            var field = $(this);
+                            if (field.attr('alert')) {
+                                field.html(field.attr('alert'));
+                            } else {
+                                field.html('');
+                            }
+                        });
+                    }, 8000);
+                    $.unblockUI();
+                }
+            });
+        });
+    </script>
+{% endblock %}
+{% block titulo %}{{ title }}{% endblock %}
+{% block formwidth %}form-l{% endblock %}
+{% block formaction %}/adm_configuracioncomplexivo{% endblock %}
+{% block formdestination %}/adm_configuracioncomplexivo?action=adm_cronogramaexamen{% endblock %}
+{% block formadicional %}
+    <table class="table-bordered table hidden">
+        <thead>
+           <tr><th colspan="12">Grupos <button class="btn btn-mini btn-success pull-right" onclick="addGrupo();"><i class="fa fa-plus"></i></button></th></tr>
+            <tr>
+                <th>Detalles</th>
+                <th>Inicio - Fin</th>
+                <th>Tiempo (min)</th>
+                <th>Nota mínima</th>
+                <th>Nota máxima</th>
+                <th style="text-align: center;">Detalle de examen</th>
+                <th style="text-align: center;">Ajustes</th>
+            </tr>
+        </thead>
+        <tbody id="tbgrupos">
+
+        </tbody>
+    </table>
+    <div class="modal fade hide" id="myModal">
+        <div class="modal-header"><h5 id="header1">Grupos</h5></div>
+        <div class="modal-body">
+            <div class='well'>
+                <div class="row-fluid">
+                    {% load widget_tweaks %}
+                    <form id="formgrupo" formtype="form-horizontal" style="width: 100%; margin-bottom: 0" onsubmit="return false">
+                        {% for field in form2.visible_fields %}
+                            <div id="fieldset_{{ field.name }}" class="control-group cont-{{ field.field.widget.attrs.formwidth }}" style="padding: 1%; min-height:45px; float: left; {% if not field.field.widget.attrs.formwidth %} width: 100%{% endif %}">
+                                <div class="control-label" style="line-height: 20px; text-align: left; padding-right: 10px">
+                                    {{ field.label }}
+                                </div>
+                                <div class="controls cont-div-{{ field.field.widget.attrs.formwidth }}" style="width: 100%">
+                                    {% render_field field %}
+                                    <p class="help-text" style="font-size: 10px; margin: 0; padding: 0; line-height: 1.1;" alert="{{ field.help_text }}">{{ field.help_text }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <p style="text-align: right; margin-bottom: 0">
+                <a href="javascript:;" id="agregar" class="btn btn-success"> Agregar</a>
+                <a href="javascript:;" id="cerrar" class="btn btn-danger"> Cerrar</a>
+            </p>
+        </div>
+    </div>
+    <div class="modal fade hide" id="myModal2">
+        <div class="modal-header"><h5>Grupos de estudiantes</h5></div>
+        <div class="modal-body">
+            <div class='well'>
+                <div class="row-fluid">
+                    {% load widget_tweaks %}
+                    <form id="formgrupoest" formtype="form-horizontal" style="width: 100%; margin-bottom: 0" onsubmit="return false">
+                        {% for field in form3.visible_fields %}
+                            <div id="fieldset_{{ field.name }}" class="control-group cont-{{ field.field.widget.attrs.formwidth }}" style="padding: 1%; min-height:45px; float: left; {% if not field.field.widget.attrs.formwidth %} width: 100%{% endif %}">
+                                <div class="control-label" style="line-height: 20px; text-align: left; padding-right: 10px">
+                                    {{ field.label }}
+                                </div>
+                                <div class="controls cont-div-{{ field.field.widget.attrs.formwidth }}" style="width: 100%">
+                                    {% render_field field %}
+                                    <p class="help-text" style="font-size: 10px; margin: 0; padding: 0; line-height: 1.1;" alert="{{ field.help_text }}">{{ field.help_text }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </form>
+
+                </div>
+                <div class="row-fluid">
+                    <table class="table table-bordered">
+                        <thead>
+                            <th colspan="12">Alumnos</th>
+                        </thead>
+                        <tbody id="tbest">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <p style="text-align: right; margin-bottom: 0">
+                <a href="javascript:;" id="agregarest" class="btn btn-success"> Agregar</a>
+                <a href="javascript:;" id="cerrarest" class="btn btn-danger"> Cerrar</a>
+            </p>
+        </div>
+    </div>
+{% endblock %}
+{% block formextra %}
+    <input type='hidden' name='action' value='add_cronogramaexamen'/>
+    <input type='hidden' id='valiaction' name='vali' value='0'/>
+{% endblock %}
+{% block formback %}/adm_configuracioncomplexivo?action=adm_cronogramaexamen{% endblock %}
+{% block buttonname %}Guardar{% endblock %}
