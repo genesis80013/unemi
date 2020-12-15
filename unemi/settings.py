@@ -30,7 +30,7 @@ MANAGERS = ADMINS
 SECRET_KEY = 'z+$3)c3yv!e01pm%j&6$-r3c%fxuud8q!kkb*ivmh$ppc!jkdz'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
 
